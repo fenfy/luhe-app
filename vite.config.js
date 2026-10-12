@@ -8,10 +8,14 @@ export default defineConfig(({ mode }) => {
     server: {
       host: true,
       port: 5173,
-      // 对接后端时把 /api 转发到 luhe 服务
-      proxy: env.VITE_API_PROXY
-        ? { '/api': { target: env.VITE_API_PROXY, changeOrigin: true, rewrite: (p) => p.replace(/^\/api/, '') } }
-        : undefined,
+      // 开发时把 /api 转发到 luhe 后端 C端服务（luhe-app，默认 :8061），浏览器不涉及跨域
+      proxy: {
+        '/api': {
+          target: env.VITE_API_PROXY || 'http://localhost:8061',
+          changeOrigin: true,
+          rewrite: (p) => p.replace(/^\/api/, ''),
+        },
+      },
     },
   }
 })

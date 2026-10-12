@@ -54,7 +54,7 @@ export function enrichDraw(draw) {
 
 /* ---------------- 时间与期号 ----------------
  * dayKey：开奖地日历日期对应的 UTC 0 点时间戳，用来代表“某一天”。
- * 期号：年份 + 当年第几天（3 位），如 2026-10-09 → 2026282。
+ * 期号：开奖日期 yyyyMMdd，如 2026-10-11 → 20261011（与后端一致）。
  */
 
 function drawMinutes() {
@@ -84,27 +84,26 @@ export function nextDrawAt(now = Date.now()) {
   return drawAtOf(latestDrawDayKey(now) + DAY)
 }
 
+/** dayKey → 期号 yyyyMMdd（与后端 app_draw.issue_no 一致） */
 export function periodOf(dayKey) {
-  const d = new Date(dayKey)
-  const year = d.getUTCFullYear()
-  const seq = Math.round((dayKey - Date.UTC(year, 0, 1)) / DAY) + 1
-  return `${year}${String(seq).padStart(3, '0')}`
+  return formatDate(dayKey).replace(/-/g, '')
 }
 
+/** 期号 yyyyMMdd → dayKey */
 export function dayKeyOfPeriod(period) {
   const p = String(period)
-  const year = Number(p.slice(0, 4))
-  const seq = Number(p.slice(4))
-  return Date.UTC(year, 0, seq)
+  return Date.UTC(Number(p.slice(0, 4)), Number(p.slice(4, 6)) - 1, Number(p.slice(6, 8)))
 }
 
-/** 合法期号：7 位数字且序号落在当年天数内 */
+/** 合法期号：8 位数字且是有效日期 */
 export function isValidPeriod(period) {
   const p = String(period ?? '')
-  if (!/^\d{7}$/.test(p)) return false
-  const year = Number(p.slice(0, 4))
-  const seq = Number(p.slice(4))
-  return seq >= 1 && periodOf(Date.UTC(year, 0, seq)) === p
+  return /^\d{8}$/.test(p) && periodOf(dayKeyOfPeriod(p)) === p
+}
+
+/** 期号 → 'YYYY-MM-DD' */
+export function dateOfPeriod(period) {
+  return formatDate(dayKeyOfPeriod(period))
 }
 
 export function shiftPeriod(period, days) {

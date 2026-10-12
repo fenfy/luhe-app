@@ -1,6 +1,6 @@
 /**
- * Mock 实现：根据当前时间实时推算开奖数据，号码由期号决定（同一期永远相同）。
- * 返回结构与真实接口一致，见 README「接口约定」。
+ * Mock 实现（离线开发用，VITE_USE_MOCK=true 时启用）：根据当前时间推算开奖数据，
+ * 号码由期号决定（同一期永远相同）。返回结构与真实接口一致，见 README「接口约定」。
  */
 import { LOTTERY } from '../config/lottery.js'
 import {
@@ -12,9 +12,7 @@ import {
   latestDrawDayKey,
   periodOf,
 } from '../utils/lottery.js'
-
-const SAMPLE_MP4 = 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4'
-const SAMPLE_HLS = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8'
+import { withDemoVideo } from './videoSource.js'
 
 const startKey = () => dayKeyOfDate(LOTTERY.mockStartDate)
 
@@ -35,7 +33,8 @@ export function mockNumbers(period) {
     const n = 1 + Math.floor(r() * 49)
     if (!out.includes(n)) out.push(n)
   }
-  return { numbers: out.slice(0, 6), special: out[6] }
+  // 与后端一致：正码升序
+  return { numbers: out.slice(0, 6).sort((a, b) => a - b), special: out[6] }
 }
 
 function drawOf(dayKey) {
@@ -48,16 +47,7 @@ function drawOf(dayKey) {
 }
 
 function videoOf(dayKey) {
-  const draw = drawOf(dayKey)
-  const r = rng(Number(draw.period) * 31)
-  const hls = Number(draw.period) % 2 === 1
-  return {
-    ...draw,
-    duration: 125 + Math.floor(r() * 40),
-    cover: null,
-    src: hls ? SAMPLE_HLS : SAMPLE_MP4,
-    type: hls ? 'hls' : 'mp4',
-  }
+  return withDemoVideo(drawOf(dayKey))
 }
 
 /** 是否已开奖且在 mock 数据范围内 */

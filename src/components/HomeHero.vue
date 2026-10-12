@@ -19,7 +19,9 @@ const emit = defineEmits(['countdown-end'])
 
 const waiting = computed(() => props.phase === 'waiting')
 const shownPeriod = computed(() => (waiting.value ? props.next?.period : props.draw?.period) || '')
-const seqText = computed(() => shownPeriod.value.slice(-3))
+// 背景大字：期号的月日部分
+const seqText = computed(() => shownPeriod.value.slice(-4))
+const empty = computed(() => !props.draw && props.phase === 'idle')
 const nextTarget = computed(() => (props.next ? Date.parse(props.next.drawAt) : 0))
 const nextDay = computed(() => {
   if (!props.next) return ''
@@ -36,7 +38,7 @@ const replayTo = computed(() => ({ name: 'video', query: props.draw ? { period: 
       <div class="head">
         <div class="eyebrow"><span class="dot" />{{ LOTTERY.name }} · {{ waiting ? '正在开奖' : '最新开奖' }}</div>
         <h1 class="title">
-          第 <span class="num period">{{ shownPeriod || '-------' }}</span> 期
+          第 <span class="num period">{{ shownPeriod || '--------' }}</span> 期
         </h1>
         <div class="meta" aria-live="polite">
           <template v-if="waiting">开奖中…号码即将揭晓</template>
@@ -45,9 +47,10 @@ const replayTo = computed(() => ({ name: 'video', query: props.draw ? { period: 
         </div>
       </div>
 
-      <DrawBalls :draw="waiting ? null : draw" :revealed="phase === 'revealing' ? revealed : 7" size="lg" show-zodiac />
+      <p v-if="empty" class="empty">暂无开奖结果，敬请期待首期开奖</p>
+      <DrawBalls v-else :draw="waiting ? null : draw" :revealed="phase === 'revealing' ? revealed : 7" size="lg" show-zodiac />
 
-      <div class="actions only-pc">
+      <div v-if="draw" class="actions only-pc">
         <RouterLink :to="replayTo" class="btn btn-primary btn-tall"><Icon name="play" />观看本期开奖回放</RouterLink>
         <span class="hint">生肖按 {{ LOTTERY.zodiacYear }} 年对照</span>
       </div>
@@ -57,7 +60,7 @@ const replayTo = computed(() => ({ name: 'video', query: props.draw ? { period: 
       <div class="next-head">
         <div class="next-label">距下期开奖</div>
         <div class="next-period">
-          第 <span class="num">{{ next?.period || '-------' }}</span> 期
+          第 <span class="num">{{ next?.period || '--------' }}</span> 期
         </div>
         <div class="next-day">{{ nextDay }}</div>
       </div>
@@ -66,7 +69,7 @@ const replayTo = computed(() => ({ name: 'video', query: props.draw ? { period: 
         <Icon name="clock" :size="16" />
         每天 {{ LOTTERY.drawTime }} 准时开奖，归零后号码逐个揭晓
       </div>
-      <RouterLink :to="replayTo" class="btn btn-primary btn-tall only-mobile"><Icon name="play" />观看本期开奖回放</RouterLink>
+      <RouterLink v-if="draw" :to="replayTo" class="btn btn-primary btn-tall only-mobile"><Icon name="play" />观看本期开奖回放</RouterLink>
     </div>
   </section>
 </template>
@@ -134,6 +137,14 @@ const replayTo = computed(() => ({ name: 'video', query: props.draw ? { period: 
   color: var(--muted);
   font-size: 15px;
   min-height: 22px;
+}
+.empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
 }
 .actions {
   display: flex;

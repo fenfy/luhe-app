@@ -33,7 +33,7 @@ const isLatest = computed(() => !!current.value && current.value.period === late
 async function ensureLatestPeriod() {
   if (latestPeriod.value) return latestPeriod.value
   const res = await getLatestDraw()
-  latestPeriod.value = res.current.period
+  latestPeriod.value = res.current?.period || ''
   return latestPeriod.value
 }
 
@@ -50,7 +50,7 @@ async function loadCurrent() {
     const detail = isValidPeriod(period) ? await getVideoDetail(period) : null
     if (my !== loadToken) return
     current.value = detail
-    if (!detail) currentError.value = `没有找到第 ${period} 期的开奖视频`
+    if (!detail) currentError.value = period ? `没有找到第 ${period} 期的开奖视频` : '暂无开奖视频'
   } catch (e) {
     if (my !== loadToken) return
     current.value = null
@@ -83,8 +83,8 @@ const filtering = computed(() => !!(filters.date || filters.period))
 
 function search() {
   const period = form.period.trim()
-  if (period && !/^\d{7}$/.test(period)) {
-    formError.value = '期号为 7 位数字，如 2026282'
+  if (period && !isValidPeriod(period)) {
+    formError.value = '期号为 8 位开奖日期，如 20261011'
     return
   }
   formError.value = ''
@@ -118,7 +118,7 @@ videos.reset()
         <div v-if="currentLoading && !current" class="player-placeholder">加载中…</div>
         <div v-else-if="currentError" class="player-placeholder">
           <p>{{ currentError }}</p>
-          <RouterLink :to="{ name: 'video' }" class="btn">观看最新一期</RouterLink>
+          <RouterLink v-if="queryPeriod" :to="{ name: 'video' }" class="btn">观看最新一期</RouterLink>
         </div>
         <VideoPlayer
           v-else-if="currentVideo"
@@ -169,8 +169,8 @@ videos.reset()
               class="field"
               type="text"
               inputmode="numeric"
-              maxlength="7"
-              placeholder="如 2026282"
+              maxlength="8"
+              placeholder="如 20261011"
               :aria-invalid="!!formError"
               aria-describedby="period-error"
             />

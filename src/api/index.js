@@ -1,13 +1,13 @@
 /**
  * 页面只从这里取数据。
- * VITE_USE_MOCK=false 时切换为真实接口（见 .env.example）。
+ * 默认请求 luhe 后端真实接口；VITE_USE_MOCK=true 时改用本地 mock（离线开发用，见 .env.example）。
  */
 import * as mock from './mock.js'
 import * as http from './http.js'
 
-const impl = import.meta.env.VITE_USE_MOCK === 'false' ? http : mock
+const impl = import.meta.env.VITE_USE_MOCK === 'true' ? mock : http
 
-/** 最新一期 + 下一期：{ current: Draw, next: { period, drawAt } } */
+/** 最新一期 + 下一期：{ current: Draw | null, next: { period, drawAt } } */
 export const getLatestDraw = () => impl.getLatestDraw()
 
 /** 历史开奖（倒序）：{ total, list: Draw[] } */

@@ -36,21 +36,22 @@ async function loadLatest() {
   }
 }
 
-/** 倒计时归零：轮询直到拿到新一期，然后逐个揭晓号码 */
+/**
+ * 倒计时归零：轮询直到后端公布这一期，然后逐个揭晓号码。
+ * 开奖由后台人工执行，可能晚于开奖时刻，所以一直等（每 5 秒查一次），直到离开页面。
+ */
+let disposed = false
 function onCountdownEnd() {
   if (phase.value !== 'idle' || !next.value) return
   const expected = next.value.period
   phase.value = 'waiting'
-  const started = Date.now()
 
   const poll = async () => {
+    if (disposed) return
     const res = await loadLatest()
-    if (res && res.current.period === expected) return startReveal()
-    if (Date.now() - started > 10 * 60 * 1000) {
-      phase.value = 'idle' // 超时：放弃动画，保留现有数据
-      return
-    }
-    pollTimer = setTimeout(poll, 3000)
+    if (disposed) return
+    if (res?.current && res.current.period === expected) return startReveal()
+    pollTimer = setTimeout(poll, 5000)
   }
   poll()
 }
@@ -87,6 +88,7 @@ onMounted(() => {
   history.reset()
 })
 onBeforeUnmount(() => {
+  disposed = true
   clearTimeout(pollTimer)
   clearInterval(revealTimer)
 })
