@@ -170,7 +170,7 @@ videos.reset()
               type="text"
               inputmode="numeric"
               maxlength="8"
-              placeholder="如 20261011"
+              placeholder="如 2026011"
               :aria-invalid="!!formError"
               aria-describedby="period-error"
             />

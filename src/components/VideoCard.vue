@@ -8,6 +8,12 @@ defineProps({
   active: Boolean,
 })
 defineEmits(['select'])
+const fmtDate = (iso) => {
+  const dt = new Date(iso)
+  if (Number.isNaN(dt.getTime())) return iso
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())} ${pad(dt.getHours())}:${pad(dt.getMinutes())}`
+}
 </script>
 
 <template>
@@ -31,7 +37,7 @@ defineEmits(['select'])
 
     <div class="info">
       <span class="title">第 <span class="num">{{ video.period }}</span> 期</span>
-      <span class="date">{{ video.date }} {{ video.week }} {{ video.time }}</span>
+      <span class="date">{{ fmtDate(video.drawAt) }}</span>
       <span v-if="active" class="playing">正在播放</span>
     </div>
 

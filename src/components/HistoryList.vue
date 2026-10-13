@@ -10,6 +10,14 @@ defineProps({
 })
 
 const replayTo = (period) => ({ name: 'video', query: { period } })
+
+/** ISO 时间 → 本地 yyyy-MM-dd HH:mm */
+const fmtDate = (iso) => {
+  const dt = new Date(iso)
+  if (Number.isNaN(dt.getTime())) return iso
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())} ${pad(dt.getHours())}:${pad(dt.getMinutes())}`
+}
 </script>
 
 <template>
@@ -18,7 +26,7 @@ const replayTo = (period) => ({ name: 'video', query: { period } })
     <li v-for="d in items" :key="d.period" class="m-item">
       <div class="m-top">
         <span class="m-period">第 <span class="num">{{ d.period }}</span> 期</span>
-        <span class="m-date">{{ d.date }} {{ d.week }}</span>
+        <span class="m-date">{{ fmtDate(d.drawAt) }}</span>
       </div>
       <div class="m-bottom">
         <DrawBalls :draw="d" size="sm" show-zodiac class="m-balls" />
@@ -41,7 +49,7 @@ const replayTo = (period) => ({ name: 'video', query: { period } })
       </div>
       <div v-for="d in items" :key="d.period" class="row" role="row">
         <span role="cell" class="num period">{{ d.period }}</span>
-        <span role="cell" class="date">{{ d.date }} {{ d.week }} {{ d.time }}</span>
+        <span role="cell" class="date">{{ fmtDate(d.drawAt) }}</span>
         <div role="cell" class="balls">
           <LotteryBall v-for="b in d.balls" :key="b.value" :ball="b" size="sm" class="inline-ball" show-zodiac />
         </div>
