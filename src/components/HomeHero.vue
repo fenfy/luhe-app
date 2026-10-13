@@ -29,6 +29,13 @@ const nextDay = computed(() => {
   return `${formatMonthDay(key)} ${weekdayOf(key)} ${LOTTERY.drawTime}`
 })
 const replayTo = computed(() => ({ name: 'video', query: props.draw ? { period: props.draw.period } : {} }))
+
+const fmtDate = (iso) => {
+  const dt = new Date(iso)
+  if (Number.isNaN(dt.getTime())) return iso
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())} ${pad(dt.getHours())}:${pad(dt.getMinutes())}`
+}
 </script>
 
 <template>
@@ -43,7 +50,7 @@ const replayTo = computed(() => ({ name: 'video', query: props.draw ? { period: 
         <div class="meta" aria-live="polite">
           <template v-if="waiting">开奖中…号码即将揭晓</template>
           <template v-else-if="phase === 'revealing'">号码揭晓中…</template>
-          <template v-else-if="draw">{{ draw.date }} {{ draw.week }} {{ draw.time }}</template>
+          <template v-else-if="draw">{{ fmtDate(draw.drawAt) }}</template>
         </div>
       </div>
 
