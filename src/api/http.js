@@ -18,6 +18,11 @@ async function get(path, params = {}) {
     throw new Error('网络异常，请检查网络后重试')
   }
   if (!res.ok) throw new Error(`服务暂时不可用（${res.status}）`)
+  // 返回的不是 JSON（常见是 index.html）：说明 /api 没有转发到后端，见 README「部署说明」
+  if (!(res.headers.get('content-type') || '').includes('json')) {
+    console.error(`[api] ${res.url} 返回的不是 JSON，请检查 /api 是否转发到 luhe-app`)
+    throw new Error('接口地址未正确配置，请联系管理员')
+  }
   const body = await res.json()
   if (body.code !== undefined && body.code !== 200) throw new Error(body.msg || '接口返回错误')
   return body

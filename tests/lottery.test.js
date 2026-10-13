@@ -148,7 +148,7 @@ test('真实接口：请求路径、参数与返回映射', async () => {
           : url.endsWith('/bad')
             ? { code: 500, msg: '期号格式应为 yyyyMMdd' }
             : { code: 200, data: draw }
-    return { ok: true, json: async () => body }
+    return { ok: true, url, headers: new Headers({ 'content-type': 'application/json' }), json: async () => body }
   }
 
   assert.equal((await latestApi()).next.period, '20261012')
@@ -167,4 +167,18 @@ test('真实接口：请求路径、参数与返回映射', async () => {
   assert.equal((await detailApi('20261011')).special, 9)
   assert.equal(await detailApi('20261013'), null)
   await assert.rejects(() => detailApi('bad'), /期号格式应为 yyyyMMdd/)
+})
+
+test('真实接口：返回 HTML（/api 未转发）时给出明确错误', async () => {
+  const { getLatestDraw: latestApi } = await import('../src/api/http.js')
+  const origError = console.error
+  console.error = () => {}
+  globalThis.fetch = async (url) => ({
+    ok: true,
+    url,
+    headers: new Headers({ 'content-type': 'text/html' }),
+    json: async () => JSON.parse('<!doctype html>'),
+  })
+  await assert.rejects(() => latestApi(), /接口地址未正确配置/)
+  console.error = origError
 })

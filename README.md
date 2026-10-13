@@ -21,9 +21,10 @@ npm test           # 单元测试（期号、生肖、波色、mock 数据、接
 
 后端不在本机时，在 `.env.local` 里设置 `VITE_API_PROXY`。没有后端时，可以设置 `VITE_USE_MOCK=true` 改用本地 mock 数据（见 `.env.example`）。
 
-部署说明：
-- 项目使用 history 路由，服务器需要把所有路径都回退到 `index.html`（Nginx：`try_files $uri $uri/ /index.html;`）。
-- 接口前缀默认是 `/api`。Nginx 需要把 `/api/` 转发到 luhe-app 并去掉前缀，例如 `location /api/ { proxy_pass http://127.0.0.1:8061/; }`。也可以在打包时设置 `VITE_API_BASE` 为后端地址，此时需要在后端 `app.cors.allowed-origins` 里配置 H5 域名。
+部署说明（打包后页面要能请求到 `/api`，否则会报 `Unexpected token '<' ... is not valid JSON`，因为 `/api` 请求拿到的是 index.html）：
+- `npm run preview`：已在 `vite.config.js` 配好 `preview.proxy`，和开发时一样把 `/api` 转发到 `VITE_API_PROXY`（默认 `http://localhost:8061`）。访问 http://localhost:4173。
+- Nginx：参考 `deploy/nginx.conf.example`。要点是 `location /api/ { proxy_pass http://127.0.0.1:8061/; }`（结尾的 `/` 用来去掉 `/api` 前缀）和 `try_files $uri $uri/ /index.html;`（history 路由）。
+- 其他静态服务器（如直接用 `npx serve dist`）不会转发 `/api`，不能直接使用。或者在打包前把 `VITE_API_BASE` 设为后端完整地址（如 `https://api.example.com`），这时后端 `app.cors.allowed-origins` 要加上 H5 的域名。
 
 ## 目录
 

@@ -1,0 +1,31 @@
+# 路合开奖 H5 部署示例（Nginx）
+# 1. npm run build，把 dist/ 拷到服务器，例如 /var/www/luhe-app
+# 2. 把下面的 server 块放进 nginx 配置，按实际修改域名、路径和后端地址后 nginx -s reload
+
+server {
+    listen       80;
+    server_name  h5.example.com;
+
+    root   /var/www/luhe-app;
+    index  index.html;
+
+    # 接口：/api/xxx 转发到 luhe-app（C端服务）的 /xxx。proxy_pass 结尾的 / 会去掉 /api 前缀，不能省略
+    location /api/ {
+        proxy_pass         http://127.0.0.1:8061/;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+
+    # 前端路由（history 模式）：找不到的路径回退到 index.html
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # 带哈希的静态资源长期缓存
+    location /assets/ {
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+}
