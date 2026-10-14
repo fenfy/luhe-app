@@ -11,6 +11,12 @@ const router = createRouter({
       component: () => import('../views/VideoView.vue'),
       meta: { title: '开奖视频' },
     },
+    {
+      path: '/trend',
+      name: 'trend',
+      component: () => import('../views/TrendView.vue'),
+      meta: { title: '走势图' },
+    },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
   scrollBehavior(to, from, saved) {

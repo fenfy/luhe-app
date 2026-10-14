@@ -4,6 +4,7 @@
  * 开发时 /api 由 Vite 代理到后端（见 vite.config.js），生产环境由 VITE_API_BASE 指定。
  */
 import { withDemoVideo } from './videoSource.js'
+import { normalizePeriod } from '../utils/lottery.js'
 
 const BASE = import.meta.env?.VITE_API_BASE || '/api'
 
@@ -42,10 +43,10 @@ export async function getDrawHistory({ page = 1, pageSize = 10 } = {}) {
 
 /**
  * 开奖视频列表：按期号倒序的已开奖期 + 测试视频
- * date（YYYY-MM-DD）与 period（yyyyMMdd）都对应期号；两者都填但不是同一天时结果为空。
+ * date（YYYY-MM-DD）换算成期号；与 period 都填但不是同一期时结果为空。
  */
 export async function getVideoList({ page = 1, pageSize = 10, date = '', period = '' } = {}) {
-  const fromDate = date ? date.replace(/-/g, '') : ''
+  const fromDate = date ? normalizePeriod(date) : ''
   if (period && fromDate && period !== fromDate) return { total: 0, list: [] }
   const issueNo = period || fromDate
   const body = await get('/app/lottery/draw/list', { pageNum: page, pageSize, issueNo })
@@ -56,4 +57,14 @@ export async function getVideoList({ page = 1, pageSize = 10, date = '', period 
 export async function getVideoDetail(period) {
   const body = await get(`/app/lottery/draw/${encodeURIComponent(period)}`)
   return body.data ? withDemoVideo(body.data) : null
+}
+
+/**
+ * GET /app/lottery/trend → 走势统计
+ * { type, periods, fromIssue, toIssue, hits, numbers, waves, tails, segments, zodiacs }
+ * 各项为 { key, count, miss }；miss 为当前遗漏期数，只有特码组有（正码组为 null）
+ */
+export async function getTrend({ type = 'special', periods = 30 } = {}) {
+  const body = await get('/app/lottery/trend', { type, periods })
+  return body.data
 }

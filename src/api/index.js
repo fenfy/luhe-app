@@ -18,3 +18,6 @@ export const getVideoList = (params) => impl.getVideoList(params)
 
 /** 单期视频：Video | null */
 export const getVideoDetail = (period) => impl.getVideoDetail(period)
+
+/** 走势统计：type = special（特码）/ normal（正码），periods = 10/20/30/50/100 */
+export const getTrend = (params) => impl.getTrend(params)

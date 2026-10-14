@@ -21,6 +21,10 @@
   --red: #c9252b;
   --blue: #2160c4;
   --green: #167a3d;
+  /* 图表：单系列柱子用中性石板色，与红/蓝/绿波色区分开 */
+  --chart-bar: #4b5a73;
+  --chart-bar-hover: #2b3548;
+  --chart-grid: #edf0f4;
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 4px 12px rgba(16, 24, 40, 0.04);
 
   --font-body: 'Noto Sans SC', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;

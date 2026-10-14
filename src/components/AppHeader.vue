@@ -12,6 +12,7 @@ import BrandMark from './BrandMark.vue'
       <nav aria-label="主导航" class="nav">
         <RouterLink to="/" class="nav-link" exact-active-class="is-active">首页</RouterLink>
         <RouterLink to="/video" class="nav-link" active-class="is-active">开奖视频</RouterLink>
+        <RouterLink to="/trend" class="nav-link" active-class="is-active">走势图</RouterLink>
       </nav>
     </div>
   </header>

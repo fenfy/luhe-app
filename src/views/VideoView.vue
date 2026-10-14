@@ -3,7 +3,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getLatestDraw, getVideoDetail, getVideoList } from '../api/index.js'
 import { LOTTERY, PAGE_SIZE } from '../config/lottery.js'
-import { enrichDraw, formatClock, isValidPeriod, shiftPeriod } from '../utils/lottery.js'
+import { enrichDraw, formatClock, isValidPeriod, normalizePeriod, shiftPeriod } from '../utils/lottery.js'
 import { useIsMobile } from '../composables/useMediaQuery.js'
 import { usePagedList } from '../composables/usePagedList.js'
 import VideoPlayer from '../components/VideoPlayer.vue'
@@ -82,9 +82,10 @@ const videoItems = computed(() => videos.list.value.map(enrichVideo))
 const filtering = computed(() => !!(filters.date || filters.period))
 
 function search() {
-  const period = form.period.trim()
-  if (period && !isValidPeriod(period)) {
-    formError.value = '期号为 8 位开奖日期，如 20261011'
+  const raw = form.period.trim()
+  const period = raw ? normalizePeriod(raw) : ''
+  if (raw && !period) {
+    formError.value = '期号为 年份+3位天数，如 2026285'
     return
   }
   formError.value = ''
@@ -169,7 +170,7 @@ videos.reset()
               class="field"
               type="text"
               inputmode="numeric"
-              maxlength="8"
+              maxlength="10"
               placeholder="如 2026011"
               :aria-invalid="!!formError"
               aria-describedby="period-error"

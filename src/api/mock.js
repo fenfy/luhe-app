@@ -11,6 +11,10 @@ import {
   isValidPeriod,
   latestDrawDayKey,
   periodOf,
+  getWave,
+  getZodiac,
+  pad2,
+  ZODIAC_ORDER,
 } from '../utils/lottery.js'
 import { withDemoVideo } from './videoSource.js'
 
@@ -33,8 +37,8 @@ export function mockNumbers(period) {
     const n = 1 + Math.floor(r() * 49)
     if (!out.includes(n)) out.push(n)
   }
-  // 与后端一致：正码升序
-  return { numbers: out.slice(0, 6).sort((a, b) => a - b), special: out[6] }
+  // 与后端一致：正码保持开出顺序
+  return { numbers: out.slice(0, 6), special: out[6] }
 }
 
 function drawOf(dayKey) {
@@ -105,4 +109,50 @@ export function getVideoDetail(period, { now = Date.now() } = {}) {
   if (!isValidPeriod(period)) return delay(null)
   const key = dayKeyOfPeriod(period)
   return delay(isDrawn(key, now) ? videoOf(key) : null)
+}
+
+const WAVE_NAME = { red: '红波', blue: '蓝波', green: '绿波' }
+const SEGMENTS = ['01-10', '11-20', '21-30', '31-40', '41-49']
+
+/** 与后端 LotteryTrend 相同的统计口径 */
+export function getTrend({ type = 'special', periods = 30, now = Date.now() } = {}) {
+  const special = type === 'special'
+  const latest = latestDrawDayKey(now)
+  const history = []
+  for (let i = 0; i < 100; i++) {
+    const key = latest - i * DAY
+    if (key < startKey()) break
+    history.push(drawOf(key))
+  }
+  const windowDraws = history.slice(0, periods)
+  const picked = (d) => (special ? [d.special] : d.numbers)
+  const classify = {
+    numbers: (n) => pad2(n),
+    waves: (n) => WAVE_NAME[getWave(n)],
+    tails: (n) => String(n % 10),
+    segments: (n) => SEGMENTS[Math.floor((n - 1) / 10)],
+    zodiacs: (n) => getZodiac(n),
+  }
+  const keys = {
+    numbers: Array.from({ length: 49 }, (_, i) => pad2(i + 1)),
+    waves: ['红波', '蓝波', '绿波'],
+    tails: Array.from({ length: 10 }, (_, i) => String(i)),
+    segments: SEGMENTS,
+    zodiacs: ZODIAC_ORDER,
+  }
+  const result = {
+    type,
+    periods: windowDraws.length,
+    fromIssue: windowDraws.at(-1)?.period ?? null,
+    toIssue: windowDraws[0]?.period ?? null,
+    hits: windowDraws.reduce((s, d) => s + picked(d).length, 0),
+  }
+  for (const [group, fn] of Object.entries(classify)) {
+    const counts = Object.fromEntries(keys[group].map((k) => [k, 0]))
+    windowDraws.forEach((d) => picked(d).forEach((n) => counts[fn(n)]++))
+    const miss = {}
+    if (special) history.forEach((d, i) => (miss[fn(d.special)] ??= i))
+    result[group] = keys[group].map((k) => ({ key: k, count: counts[k], miss: special ? (miss[k] ?? null) : null }))
+  }
+  return delay(result)
 }

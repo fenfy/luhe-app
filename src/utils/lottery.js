@@ -54,7 +54,7 @@ export function enrichDraw(draw) {
 
 /* ---------------- 时间与期号 ----------------
  * dayKey：开奖地日历日期对应的 UTC 0 点时间戳，用来代表“某一天”。
- * 期号：开奖日期 yyyyMMdd，如 2026-10-11 → 20261011（与后端一致）。
+ * 期号：年份 + 当年第几天（3 位），如 2026-10-12 → 2026285（与后端一致）。
  */
 
 function drawMinutes() {
@@ -84,26 +84,38 @@ export function nextDrawAt(now = Date.now()) {
   return drawAtOf(latestDrawDayKey(now) + DAY)
 }
 
-/** dayKey → 期号 yyyyMMdd（与后端 app_draw.issue_no 一致） */
+/** dayKey → 期号：年份 + 当年第几天（3 位），如 2026-10-12 → 2026285（与后端 LotteryIssue 一致） */
 export function periodOf(dayKey) {
-  return formatDate(dayKey).replace(/-/g, '')
+  const year = new Date(dayKey).getUTCFullYear()
+  const seq = Math.round((dayKey - Date.UTC(year, 0, 1)) / DAY) + 1
+  return `${year}${String(seq).padStart(3, '0')}`
 }
 
-/** 期号 yyyyMMdd → dayKey */
+/** 期号 → dayKey */
 export function dayKeyOfPeriod(period) {
   const p = String(period)
-  return Date.UTC(Number(p.slice(0, 4)), Number(p.slice(4, 6)) - 1, Number(p.slice(6, 8)))
+  return Date.UTC(Number(p.slice(0, 4)), 0, Number(p.slice(4)))
 }
 
-/** 合法期号：8 位数字且是有效日期 */
+/** 合法期号：7 位数字，天数在当年范围内 */
 export function isValidPeriod(period) {
   const p = String(period ?? '')
-  return /^\d{8}$/.test(p) && periodOf(dayKeyOfPeriod(p)) === p
+  return /^\d{7}$/.test(p) && Number(p.slice(4)) >= 1 && periodOf(dayKeyOfPeriod(p)) === p
 }
 
 /** 期号 → 'YYYY-MM-DD' */
 export function dateOfPeriod(period) {
   return formatDate(dayKeyOfPeriod(period))
+}
+
+/** 用户输入转期号：接受期号（2026285）或日期（20261012 / 2026-10-12），无效返回 null */
+export function normalizePeriod(input) {
+  const s = String(input ?? '').trim()
+  if (isValidPeriod(s)) return s
+  const m = /^(\d{4})-?(\d{2})-?(\d{2})$/.exec(s)
+  if (!m) return null
+  const key = dayKeyOfDate(`${m[1]}-${m[2]}-${m[3]}`)
+  return key === null ? null : periodOf(key)
 }
 
 export function shiftPeriod(period, days) {

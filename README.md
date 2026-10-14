@@ -1,6 +1,6 @@
 # 路合开奖 · 前台（luhe-app）
 
-新澳门六合彩开奖结果展示站，包含两个页面：**首页**（最新开奖、下期倒计时、历史开奖）和**开奖视频**（回放播放、按日期或期号筛选、回放列表）。
+新澳门六合彩开奖结果展示站，包含三个页面：**首页**（最新开奖、下期倒计时、历史开奖）、**开奖视频**（回放播放、按日期或期号筛选、回放列表）和**走势图**（特码 / 正码的号码、波色、生肖、尾数、波段出现次数统计）。
 
 技术栈：Vue 3（`<script setup>`，JavaScript）、Vue Router 4、Vite 6、hls.js（播放 m3u8）。没有使用 UI 组件库。
 
@@ -43,6 +43,8 @@ src/
   components/              号码球、倒计时、分页、上滑加载、播放器、视频卡片等
   views/HomeView.vue       首页
   views/VideoView.vue      开奖视频页（/video?period=2026282）
+  views/TrendView.vue      走势图页（/trend）
+  components/trend/        走势图图表：TrendSection（一组统计）、TrendBars（柱状图）、TrendDonut（环形图）、TrendHBars（横向条形）
 tests/                     node:test 单元测试
 ```
 
@@ -65,6 +67,7 @@ tests/                     node:test 单元测试
 | `GET /app/lottery/draw/latest` | `data = { current: Draw \| null, next: { period, drawAt } }` |
 | `GET /app/lottery/draw/list?pageNum&pageSize&issueNo` | `{ rows: Draw[], total }`，期号倒序 |
 | `GET /app/lottery/draw/{issueNo}` | `data = Draw \| null`（未开奖或未公布时为 null） |
+| `GET /app/lottery/trend?type=special\|normal&periods=10\|20\|30\|50\|100` | `data = { periods, fromIssue, toIssue, hits, numbers, waves, tails, segments, zodiacs }`，每项 `{ key, count, miss }`，`miss` 仅特码有 |
 
 ```js
 Draw = { period: '20261011', drawAt: '2026-10-11T21:32:00+08:00', numbers: [6 个正码，升序], special: 特码 }
