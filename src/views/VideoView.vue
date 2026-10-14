@@ -245,7 +245,7 @@ videos.reset()
 }
 .player-placeholder {
   aspect-ratio: 16 / 9;
-  background: var(--surface-deep);
+  background: var(--thumb);
   border: 1px solid var(--line);
   border-radius: 18px;
   display: flex;
@@ -339,7 +339,7 @@ videos.reset()
 }
 .form-error {
   margin: -12px 0 0;
-  color: #ff8a80;
+  color: #c62828;
   font-size: 13px;
 }
 .grid {

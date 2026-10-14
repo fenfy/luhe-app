@@ -116,7 +116,7 @@ const fmtDate = (iso) => {
   text-align: right;
 }
 .replay:hover {
-  color: var(--gold);
+  color: var(--gold-text);
 }
 
 /* 手机卡片 */
@@ -174,6 +174,6 @@ const fmtDate = (iso) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--gold);
+  color: var(--gold-text);
 }
 </style>

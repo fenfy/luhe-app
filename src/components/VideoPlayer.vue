@@ -159,7 +159,7 @@ onBeforeUnmount(() => {
 }
 .error {
   margin: 0;
-  color: var(--muted);
+  color: #c9cfdb;
 }
 .badges {
   position: absolute;
@@ -180,6 +180,7 @@ onBeforeUnmount(() => {
 }
 .badge-dark {
   background: rgba(5, 7, 13, 0.8);
+  color: #fff;
   font-size: 13px;
   padding: 4px 10px;
   border-radius: 6px;

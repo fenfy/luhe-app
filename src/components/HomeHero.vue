@@ -121,7 +121,7 @@ const fmtDate = (iso) => {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--gold);
+  color: var(--gold-text);
   font-size: 14px;
   letter-spacing: 1px;
 }

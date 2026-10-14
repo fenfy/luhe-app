@@ -1,22 +1,27 @@
-/* ---------- 设计变量：深色“开奖演播厅” ---------- */
+/* ---------- 设计变量：亮色主题 ---------- */
 :root {
-  --bg: #0a0e18;
-  --surface: #121827;
-  --surface-hover: #161d2e;
-  --surface-deep: #05070d;
-  --thumb: #0e1322;
-  --line: #262f45;
-  --line-soft: #1e2537;
-  --text: #eef1f7;
-  --muted: #a3abbf;
-  --faint: #8a93a8;
-  --dim: #5c6680;
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --surface-hover: #f3f5f9;
+  /* 播放器保持深色底，视频画面更清楚 */
+  --surface-deep: #11151f;
+  --thumb: #eef1f6;
+  --line: #e1e5ec;
+  --line-soft: #eceff4;
+  --text: #151b27;
+  --muted: #5d6577;
+  --faint: #646c7e;
+  --dim: #a3abba;
+  /* 金色：--gold 用于填充、描边；文字用更深的 --gold-text 保证对比度 */
   --gold: #f0b94a;
-  --gold-hover: #ffd27a;
+  --gold-fill-hover: #f5c866;
+  --gold-text: #966000;
+  --gold-hover: #7a4d00;
   --on-gold: #1a1206;
   --red: #c9252b;
   --blue: #2160c4;
   --green: #167a3d;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 4px 12px rgba(16, 24, 40, 0.04);
 
   --font-body: 'Noto Sans SC', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --font-num: 'Barlow Condensed', 'DIN Alternate', 'Arial Narrow', sans-serif;
@@ -27,7 +32,7 @@
   --container: 1200px;
   --gutter: 24px;
 
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 @media (max-width: 767px) {
@@ -57,7 +62,7 @@ body {
 }
 
 a {
-  color: var(--gold);
+  color: var(--gold-text);
 }
 a:hover {
   color: var(--gold-hover);
@@ -74,7 +79,7 @@ button {
 }
 
 :focus-visible {
-  outline: 2px solid var(--gold);
+  outline: 2px solid var(--gold-text);
   outline-offset: 2px;
 }
 
@@ -102,6 +107,7 @@ h3 {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
 }
 
 .btn {
@@ -138,8 +144,8 @@ h3 {
   font-size: 15px;
 }
 .btn-primary:hover {
-  background: var(--gold-hover);
-  border-color: var(--gold-hover);
+  background: var(--gold-fill-hover);
+  border-color: var(--gold-fill-hover);
   color: var(--on-gold);
 }
 
@@ -154,7 +160,7 @@ h3 {
   width: 100%;
 }
 .field:focus {
-  outline: 2px solid var(--gold);
+  outline: 2px solid var(--gold-text);
   outline-offset: 1px;
 }
 

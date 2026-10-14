@@ -22,7 +22,8 @@ import BrandMark from './BrandMark.vue'
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(10, 14, 24, 0.94);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 1px 0 rgba(16, 24, 40, 0.02);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--line-soft);
 }
