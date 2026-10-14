@@ -106,7 +106,7 @@ const fmtDate = (iso) => {
   border-radius: 50%;
   background: rgba(240, 185, 74, 0.15);
   border: 1px solid var(--gold);
-  color: var(--gold);
+  color: var(--gold-text);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -121,7 +121,8 @@ const fmtDate = (iso) => {
   position: absolute;
   right: 5px;
   bottom: 5px;
-  background: rgba(5, 7, 13, 0.85);
+  background: rgba(5, 7, 13, 0.75);
+  color: #fff;
   font-size: 12px;
   padding: 1px 6px;
   border-radius: 4px;
@@ -183,7 +184,7 @@ const fmtDate = (iso) => {
 }
 .vrow:hover .action {
   border-color: var(--gold);
-  color: var(--gold);
+  color: var(--gold-text);
 }
 .vrow.on .action {
   background: var(--gold);
@@ -249,7 +250,7 @@ const fmtDate = (iso) => {
     height: auto;
     background: none !important;
     border: 0;
-    color: var(--gold) !important;
+    color: var(--gold-text) !important;
   }
   .thumb-dur {
     display: block;

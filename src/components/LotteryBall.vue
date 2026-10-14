@@ -82,8 +82,8 @@ onBeforeUnmount(stop)
   background: var(--green);
 }
 .is-rolling {
-  background: #39425a;
-  color: #dfe4ee;
+  background: #d6dbe4;
+  color: #4a5263;
 }
 .ball.is-special {
   outline: 2px solid var(--gold);
@@ -107,7 +107,7 @@ onBeforeUnmount(stop)
   line-height: 1;
 }
 .zodiac.is-special {
-  color: var(--gold);
+  color: var(--gold-text);
 }
 
 .size-lg .ball {

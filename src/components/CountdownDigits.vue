@@ -77,14 +77,14 @@ onBeforeUnmount(() => clearInterval(timer))
   font-weight: 700;
 }
 .is-sec {
-  color: var(--gold);
+  color: var(--gold-text);
 }
 .colon {
   height: 92px;
   display: flex;
   align-items: center;
   font-size: 40px;
-  color: var(--gold);
+  color: var(--gold-text);
 }
 .unit-label {
   font-size: 12px;

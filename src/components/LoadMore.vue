@@ -75,7 +75,7 @@ onBeforeUnmount(() => observer?.disconnect())
   font-size: 13px;
 }
 .spin {
-  color: var(--gold);
+  color: var(--gold-text);
   animation: spin 1s linear infinite;
 }
 @keyframes spin {
