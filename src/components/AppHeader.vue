@@ -11,6 +11,7 @@ import BrandMark from './BrandMark.vue'
       </RouterLink>
       <nav aria-label="主导航" class="nav">
         <RouterLink to="/" class="nav-link" exact-active-class="is-active">首页</RouterLink>
+        <RouterLink to="/results" class="nav-link" active-class="is-active">开奖公告</RouterLink>
         <RouterLink to="/video" class="nav-link" active-class="is-active">开奖视频</RouterLink>
         <RouterLink to="/trend" class="nav-link" active-class="is-active">走势图</RouterLink>
       </nav>
@@ -88,10 +89,19 @@ import BrandMark from './BrandMark.vue'
     letter-spacing: 2px;
   }
   .nav {
-    gap: 20px;
+    gap: 14px;
   }
   .nav-link {
     font-size: 15px;
+  }
+}
+/* 窄屏放不下 4 个栏目：品牌只保留图标 */
+@media (max-width: 479px) {
+  .brand-name {
+    display: none;
+  }
+  .nav {
+    gap: 12px;
   }
 }
 </style>

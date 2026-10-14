@@ -1,6 +1,6 @@
 # 路合开奖 · 前台（luhe-app）
 
-新澳门六合彩开奖结果展示站，包含三个页面：**首页**（最新开奖、下期倒计时、历史开奖）、**开奖视频**（回放播放、按日期或期号筛选、回放列表）和**走势图**（特码 / 正码的号码、波色、生肖、尾数、波段出现次数统计）。
+新澳门六合彩开奖结果展示站，包含以下页面：**首页**（最新开奖、下期倒计时、图库系列）、**开奖公告**（历史开奖，可按日期或期号筛选）、**开奖视频**（回放播放、按日期或期号筛选、回放列表）、**走势图**（特码 / 正码的号码、波色、生肖、尾数、波段出现次数统计）和**图库**（按类别浏览图片的瀑布流，从首页「更多图库」进入）。
 
 技术栈：Vue 3（`<script setup>`，JavaScript）、Vue Router 4、Vite 6、hls.js（播放 m3u8）。没有使用 UI 组件库。
 
@@ -43,7 +43,10 @@ src/
   components/              号码球、倒计时、分页、上滑加载、播放器、视频卡片等
   views/HomeView.vue       首页
   views/VideoView.vue      开奖视频页（/video?period=2026282）
+  views/ResultsView.vue    开奖公告页（/results）
   views/TrendView.vue      走势图页（/trend）
+  views/GalleryView.vue    图库页（/gallery/:type，type 为字典 app_gallery_type 的键值）
+  components/gallery/      图库：GallerySection（首页图库系列）、MasonryGrid（瀑布流）、ImageViewer（大图）
   components/trend/        走势图图表：TrendSection（一组统计）、TrendBars（柱状图）、TrendDonut（环形图）、TrendHBars（横向条形）
 tests/                     node:test 单元测试
 ```
@@ -67,6 +70,8 @@ tests/                     node:test 单元测试
 | `GET /app/lottery/draw/latest` | `data = { current: Draw \| null, next: { period, drawAt } }` |
 | `GET /app/lottery/draw/list?pageNum&pageSize&issueNo` | `{ rows: Draw[], total }`，期号倒序 |
 | `GET /app/lottery/draw/{issueNo}` | `data = Draw \| null`（未开奖或未公布时为 null） |
+| `GET /app/gallery/types` | `data = [{ value, label, count }]`，字典 `app_gallery_type` 中启用的类别，按字典排序 |
+| `GET /app/gallery/list?imageType&pageNum&pageSize` | `{ rows: [{ imageId, imageType, imageUrl, createTime }], total }`，新上传的在前；`imageUrl` 为 `/profile/...` 相对路径 |
 | `GET /app/lottery/trend?type=special\|normal&periods=10\|20\|30\|50\|100` | `data = { periods, fromIssue, toIssue, hits, numbers, waves, tails, segments, zodiacs }`，每项 `{ key, count, miss }`，`miss` 仅特码有 |
 
 ```js
@@ -78,3 +83,10 @@ Draw = { period: '20261011', drawAt: '2026-10-11T21:32:00+08:00', numbers: [6 �
 ## 演示视频源
 
 后端还没有视频数据，每期开奖暂时配一个公开测试视频：奇数期用 Mux 的 HLS 测试流，偶数期用 MDN 的 CC0 示例 mp4。视频时长是按期号生成的演示数字。
+
+## 图库
+
+- 类别来自后台「字典管理」的 `app_gallery_type`，图片在后台「图库管理」上传。没有图片的类别不显示。
+- 首页显示前几个类别（PC 8 个、手机 5 个）和当前类别最新的 12 / 10 张；数量在 `src/config/lottery.js` 的 `GALLERY` 里改。
+- 图片地址是后端返回的 `/profile/...`：开发时 Vite 把 `/profile` 代理到 luhe-app；生产环境在 Nginx 加 `location /profile/`（见 `deploy/nginx.conf.example`）。图片放在其他域名时设置 `VITE_FILE_BASE`。
+- luhe-app 需要配置 `luhe.profile`（与后台一致），才能在开发时提供 `/profile/**`。

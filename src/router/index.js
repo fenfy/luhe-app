@@ -6,6 +6,12 @@ const router = createRouter({
   routes: [
     { path: '/', name: 'home', component: HomeView, meta: { title: '首页' } },
     {
+      path: '/results',
+      name: 'results',
+      component: () => import('../views/ResultsView.vue'),
+      meta: { title: '开奖公告' },
+    },
+    {
       path: '/video',
       name: 'video',
       component: () => import('../views/VideoView.vue'),
@@ -16,6 +22,12 @@ const router = createRouter({
       name: 'trend',
       component: () => import('../views/TrendView.vue'),
       meta: { title: '走势图' },
+    },
+    {
+      path: '/gallery/:type?',
+      name: 'gallery',
+      component: () => import('../views/GalleryView.vue'),
+      meta: { title: '图库' },
     },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],

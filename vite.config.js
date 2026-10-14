@@ -10,6 +10,11 @@ export default defineConfig(({ mode }) => {
       changeOrigin: true,
       rewrite: (p) => p.replace(/^\/api/, ''),
     },
+    // 图库图片（后端返回 /profile/... 相对路径），同样由 luhe-app 提供
+    '/profile': {
+      target: env.VITE_API_PROXY || 'http://localhost:8061',
+      changeOrigin: true,
+    },
   }
   return {
     plugins: [vue()],

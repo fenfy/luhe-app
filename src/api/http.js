@@ -7,6 +7,8 @@ import { withDemoVideo } from './videoSource.js'
 import { normalizePeriod } from '../utils/lottery.js'
 
 const BASE = import.meta.env?.VITE_API_BASE || '/api'
+/** 上传文件（图库图片）的地址前缀：后端返回 /profile/... 相对路径，默认与页面同域（开发时由 Vite 代理） */
+const FILE_BASE = import.meta.env?.VITE_FILE_BASE || ''
 
 async function get(path, params = {}) {
   const query = new URLSearchParams(
@@ -35,9 +37,14 @@ export async function getLatestDraw() {
   return body.data
 }
 
-/** GET /app/lottery/draw/list → { total, list: Draw[] }（期号倒序） */
-export async function getDrawHistory({ page = 1, pageSize = 10 } = {}) {
-  const body = await get('/app/lottery/draw/list', { pageNum: page, pageSize })
+/**
+ * GET /app/lottery/draw/list → { total, list: Draw[] }（期号倒序）
+ * date（YYYY-MM-DD）换算成期号；与 period 都填但不是同一期时结果为空。
+ */
+export async function getDrawHistory({ page = 1, pageSize = 10, date = '', period = '' } = {}) {
+  const fromDate = date ? normalizePeriod(date) : ''
+  if (period && fromDate && period !== fromDate) return { total: 0, list: [] }
+  const body = await get('/app/lottery/draw/list', { pageNum: page, pageSize, issueNo: period || fromDate })
   return { total: body.total, list: body.rows }
 }
 
@@ -67,4 +74,21 @@ export async function getVideoDetail(period) {
 export async function getTrend({ type = 'special', periods = 30 } = {}) {
   const body = await get('/app/lottery/trend', { type, periods })
   return body.data
+}
+
+const fileUrl = (path) => (!path || /^(https?:)?\/\//.test(path) ? path : `${FILE_BASE}${path}`)
+
+/** GET /app/gallery/types → [{ value, label, count }]（字典 app_gallery_type，按字典排序） */
+export async function getGalleryTypes() {
+  const body = await get('/app/gallery/types')
+  return body.data || []
+}
+
+/** GET /app/gallery/list → { total, list: [{ id, type, src, createTime }] }（新上传的在前） */
+export async function getGalleryImages({ type = '', page = 1, pageSize = 20 } = {}) {
+  const body = await get('/app/gallery/list', { imageType: type, pageNum: page, pageSize })
+  return {
+    total: body.total,
+    list: body.rows.map((r) => ({ id: r.imageId, type: r.imageType, src: fileUrl(r.imageUrl), createTime: r.createTime })),
+  }
 }

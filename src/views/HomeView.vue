@@ -1,14 +1,11 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { getDrawHistory, getLatestDraw } from '../api/index.js'
-import { LOTTERY, PAGE_SIZE } from '../config/lottery.js'
+import { getLatestDraw } from '../api/index.js'
+import { LOTTERY } from '../config/lottery.js'
 import { enrichDraw } from '../utils/lottery.js'
 import { useIsMobile } from '../composables/useMediaQuery.js'
-import { usePagedList } from '../composables/usePagedList.js'
 import HomeHero from '../components/HomeHero.vue'
-import HistoryList from '../components/HistoryList.vue'
-import AppPagination from '../components/AppPagination.vue'
-import LoadMore from '../components/LoadMore.vue'
+import GallerySection from '../components/gallery/GallerySection.vue'
 
 const isMobile = useIsMobile()
 
@@ -65,28 +62,12 @@ function startReveal() {
       clearInterval(revealTimer)
       setTimeout(() => {
         phase.value = 'idle'
-        history.refresh()
       }, 600)
     }
   }, LOTTERY.revealIntervalMs)
 }
 
-/* ---------- 历史开奖 ---------- */
-const pageSize = computed(() => (isMobile.value ? PAGE_SIZE.mobile : PAGE_SIZE.history))
-const history = usePagedList((p) => getDrawHistory(p), { pageSize, isMobile })
-const historyItems = computed(() => history.list.value.map(enrichDraw))
-
-const historySection = ref(null)
-function changePage(p) {
-  history.goTo(p).then(() => {
-    historySection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  })
-}
-
-onMounted(() => {
-  loadLatest()
-  history.reset()
-})
+onMounted(loadLatest)
 onBeforeUnmount(() => {
   disposed = true
   clearTimeout(pollTimer)
@@ -109,42 +90,7 @@ onBeforeUnmount(() => {
       @countdown-end="onCountdownEnd"
     />
 
-    <section ref="historySection" class="history" aria-labelledby="history-title">
-      <div class="section-head">
-        <h2 id="history-title" class="section-title">历史开奖</h2>
-        <span class="section-meta">
-          共 {{ history.total.value }} 期<template v-if="!isMobile"> · 每页 {{ pageSize }} 期</template>
-        </span>
-      </div>
-
-      <div v-if="!history.loaded.value && history.loading.value" class="state-box">加载中…</div>
-      <div v-else-if="!history.loaded.value && history.error.value" class="state-box">
-        {{ history.error.value }}
-        <button type="button" class="btn" @click="history.retry">重试</button>
-      </div>
-      <template v-else>
-        <div :class="{ 'is-loading': history.loading.value && !isMobile }">
-          <HistoryList :items="historyItems" :is-mobile="isMobile" />
-        </div>
-        <LoadMore
-          v-if="isMobile"
-          :loading="history.loading.value"
-          :has-more="history.hasMore.value"
-          :error="history.error.value"
-          :shown="history.list.value.length"
-          :total="history.total.value"
-          @load="history.loadMore"
-          @retry="history.retry"
-        />
-        <AppPagination
-          v-else
-          :page="history.page.value"
-          :page-count="history.pageCount.value"
-          :disabled="history.loading.value"
-          @change="changePage"
-        />
-      </template>
-    </section>
+    <GallerySection :is-mobile="isMobile" />
   </div>
 </template>
 
@@ -155,16 +101,6 @@ onBeforeUnmount(() => {
   flex-direction: column;
   gap: 48px;
 }
-.history {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  scroll-margin-top: 80px;
-}
-.is-loading {
-  opacity: 0.5;
-  transition: opacity 0.2s;
-}
 .state-box .btn {
   margin-left: 12px;
 }
@@ -172,9 +108,6 @@ onBeforeUnmount(() => {
   .page {
     padding-top: 16px;
     gap: 28px;
-  }
-  .history {
-    gap: 12px;
   }
 }
 </style>

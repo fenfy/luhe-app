@@ -18,6 +18,17 @@ server {
         proxy_set_header   X-Forwarded-Proto $scheme;
     }
 
+    # 图库图片：后端返回 /profile/... 相对路径，文件在后台的上传目录（luhe.profile，默认 /data/luhe/uploadPath）
+    # 方式一（推荐，nginx 与后端在同一台机器）：直接读目录
+    location /profile/ {
+        alias   /data/luhe/uploadPath/;
+        expires 7d;
+    }
+    # 方式二（nginx 与后端不在同一台机器）：换成下面这段，转发给 luhe-app
+    # location /profile/ {
+    #     proxy_pass http://127.0.0.1:8061;
+    # }
+
     # 前端路由（history 模式）：找不到的路径回退到 index.html
     location / {
         try_files $uri $uri/ /index.html;

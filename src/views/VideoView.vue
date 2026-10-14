@@ -150,7 +150,7 @@ videos.reset()
             下一期<Icon name="right" :size="16" />
           </button>
         </div>
-        <RouterLink to="/" class="side-link pc-only">查看全部开奖结果 →</RouterLink>
+        <RouterLink to="/results" class="side-link pc-only">查看全部开奖结果 →</RouterLink>
       </aside>
     </section>
 

@@ -8,6 +8,10 @@ const props = defineProps({
   error: { type: String, default: '' },
   shown: { type: Number, default: 0 },
   total: { type: Number, default: 0 },
+  /** 计数单位：期 / 张 */
+  unit: { type: String, default: '期' },
+  /** 未加载时的提示文字 */
+  label: { type: String, default: '上滑加载更多' },
 })
 const emit = defineEmits(['load', 'retry'])
 
@@ -45,11 +49,11 @@ onBeforeUnmount(() => observer?.disconnect())
     <template v-else-if="hasMore">
       <button type="button" class="trigger" :disabled="loading" @click="emit('load')">
         <Icon name="spinner" :size="16" class="spin" />
-        {{ loading ? '加载中…' : '上滑加载更多' }}
+        {{ loading ? '加载中…' : label }}
       </button>
-      <span class="count">已显示 {{ shown }} / {{ total }} 期</span>
+      <span class="count">已显示 {{ shown }} / {{ total }} {{ unit }}</span>
     </template>
-    <span v-else-if="total > 0" class="count">— 已显示全部 {{ total }} 期 —</span>
+    <span v-else-if="total > 0" class="count">— 已显示全部 {{ total }} {{ unit }} —</span>
   </div>
 </template>
 

@@ -29,5 +29,12 @@ defineProps({
       <path d="M20 20l-3.5-3.5" />
     </template>
     <path v-else-if="name === 'spinner'" d="M21 12a9 9 0 1 1-9-9" />
+    <path v-else-if="name === 'close'" d="M6 6l12 12M18 6L6 18" />
+    <template v-else-if="name === 'grid'">
+      <rect x="4" y="4" width="6" height="6" rx="1" />
+      <rect x="14" y="4" width="6" height="6" rx="1" />
+      <rect x="4" y="14" width="6" height="6" rx="1" />
+      <rect x="14" y="14" width="6" height="6" rx="1" />
+    </template>
   </svg>
 </template>

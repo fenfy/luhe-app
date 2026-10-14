@@ -84,20 +84,30 @@ export function getLatestDraw({ now = Date.now() } = {}) {
   })
 }
 
-export function getDrawHistory({ page = 1, pageSize = 10, now = Date.now() } = {}) {
+/** 有筛选条件时最多命中一期 */
+function filteredKey({ date = '', period = '' }) {
+  let key = null
+  if (period) key = isValidPeriod(period) ? dayKeyOfPeriod(period) : null
+  if (date) {
+    const dk = dayKeyOfDate(date)
+    key = period ? (key === dk ? key : null) : dk
+  }
+  return key
+}
+
+export function getDrawHistory({ page = 1, pageSize = 10, date = '', period = '', now = Date.now() } = {}) {
+  if (date || period) {
+    const key = filteredKey({ date, period })
+    const list = key !== null && isDrawn(key, now) && page === 1 ? [drawOf(key)] : []
+    return delay({ total: list.length, list })
+  }
   const { total, keys } = pageKeys(page, pageSize, now)
   return delay({ total, list: keys.map(drawOf) })
 }
 
 export function getVideoList({ page = 1, pageSize = 9, date = '', period = '', now = Date.now() } = {}) {
-  // 有筛选条件时最多命中一期
   if (date || period) {
-    let key = null
-    if (period) key = isValidPeriod(period) ? dayKeyOfPeriod(period) : null
-    if (date) {
-      const dk = dayKeyOfDate(date)
-      key = period ? (key === dk ? key : null) : dk
-    }
+    const key = filteredKey({ date, period })
     const list = key !== null && isDrawn(key, now) && page === 1 ? [videoOf(key)] : []
     return delay({ total: list.length, list })
   }
@@ -155,4 +165,55 @@ export function getTrend({ type = 'special', periods = 30, now = Date.now() } = 
     result[group] = keys[group].map((k) => ({ key: k, count: counts[k], miss: special ? (miss[k] ?? null) : null }))
   }
   return delay(result)
+}
+
+/* ---------- 图库 ---------- */
+
+/** 与后台字典 app_gallery_type 初始数据一致；真实类别以后台字典为准 */
+const MOCK_GALLERY_TYPES = [
+  { value: '1', label: '跑狗系列', count: 46 },
+  { value: '2', label: '书籍系列', count: 23 },
+  { value: '3', label: '全网系列', count: 31 },
+  { value: '4', label: '挂牌系列', count: 0 },
+]
+const RATIOS = [[3, 4], [2, 3], [1, 1], [4, 3], [3, 5], [9, 16], [4, 5]]
+const TINTS = ['#e8d3a6', '#c9d6ea', '#d7e6d2', '#ecd0cf', '#dcd3ea', '#d2e5e8']
+
+/** 生成占位图（SVG data URI），不同宽高比，用于离线查看瀑布流效果 */
+function placeholderImage(type, id) {
+  const r = rng(Number(type) * 1000 + id)
+  const [w, h] = RATIOS[Math.floor(r() * RATIOS.length)].map((n) => n * 120)
+  const bg = TINTS[Math.floor(r() * TINTS.length)]
+  const label = MOCK_GALLERY_TYPES.find((t) => t.value === type)?.label || '图库'
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`
+    + `<rect width="100%" height="100%" fill="${bg}"/>`
+    + `<text x="50%" y="50%" text-anchor="middle" font-family="sans-serif" font-size="${Math.round(w / 9)}" fill="#5d6577">${label} #${id}</text>`
+    + `</svg>`
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+}
+
+export function getGalleryTypes() {
+  return delay(MOCK_GALLERY_TYPES.map((t) => ({ ...t })))
+}
+
+export function getGalleryImages({ type = '', page = 1, pageSize = 20, now = Date.now() } = {}) {
+  const t = MOCK_GALLERY_TYPES.find((x) => x.value === type)
+  const total = t ? t.count : 0
+  const list = []
+  for (let i = (page - 1) * pageSize; i < Math.min(total, page * pageSize); i++) {
+    const id = total - i
+    list.push({
+      id: Number(type) * 10000 + id,
+      type,
+      src: placeholderImage(type, id),
+      createTime: formatDateTime(now - i * 6 * 3600 * 1000),
+    })
+  }
+  return delay({ total, list })
+}
+
+function formatDateTime(ms) {
+  const d = new Date(ms + LOTTERY.utcOffsetHours * 3600 * 1000)
+  const p = (n) => String(n).padStart(2, '0')
+  return `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:00`
 }

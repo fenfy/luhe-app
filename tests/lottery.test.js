@@ -205,3 +205,23 @@ test('mock getTrend: 特码统计结构与遗漏', async () => {
   assert.equal(n.numbers.reduce((s, i) => s + i.count, 0), 60)
   assert.ok(n.numbers.every((i) => i.miss === null))
 })
+
+test('layoutMasonry: 放进最矮列，同高取最左', async () => {
+  const { layoutMasonry } = await import('../src/utils/masonry.js')
+  assert.deepEqual(layoutMasonry([1, 1, 1, 1], 2), [[0, 2], [1, 3]])
+  // 第 0 项很高，后面的项都进第 1 列直到超过它
+  assert.deepEqual(layoutMasonry([3, 1, 1, 1, 1], 2), [[0, 4], [1, 2, 3]])
+  assert.deepEqual(layoutMasonry([1, 2], 1), [[0, 1]])
+  assert.deepEqual(layoutMasonry([], 3), [[], [], []])
+})
+
+test('mock 图库：类别与分页', async () => {
+  const { getGalleryTypes, getGalleryImages } = await import('../src/api/mock.js')
+  const types = await getGalleryTypes()
+  assert.ok(types.length > 0 && types.every((t) => t.value && t.label && typeof t.count === 'number'))
+  const p1 = await getGalleryImages({ type: '1', page: 1, pageSize: 20 })
+  const p3 = await getGalleryImages({ type: '1', page: 3, pageSize: 20 })
+  assert.equal(p1.list.length, 20)
+  assert.equal(p3.list.length, p1.total - 40)
+  assert.equal(new Set([...p1.list, ...p3.list].map((i) => i.id)).size, p1.list.length + p3.list.length)
+})
