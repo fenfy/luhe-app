@@ -2,10 +2,12 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getLatestDraw, getVideoDetail, getVideoList } from '../api/index.js'
-import { LOTTERY, PAGE_SIZE } from '../config/lottery.js'
-import { enrichDraw, formatClock, isValidPeriod, normalizePeriod, shiftPeriod } from '../utils/lottery.js'
+import { PAGE_SIZE } from '../config/lottery.js'
+import { enrichDraw, formatClock, issueHint, normalizeIssue, shiftIssue } from '../utils/lottery.js'
 import { useIsMobile } from '../composables/useMediaQuery.js'
 import { usePagedList } from '../composables/usePagedList.js'
+import { useLottery } from '../composables/useLottery.js'
+import LotterySwitch from '../components/LotterySwitch.vue'
 import VideoPlayer from '../components/VideoPlayer.vue'
 import VideoCard from '../components/VideoCard.vue'
 import DrawBalls from '../components/DrawBalls.vue'
@@ -16,8 +18,9 @@ import Icon from '../components/Icon.vue'
 const route = useRoute()
 const router = useRouter()
 const isMobile = useIsMobile()
+const { games, code: lottery, game, setLottery } = useLottery()
 
-const enrichVideo = (v) => (v ? { ...enrichDraw(v), durationText: formatClock(v.duration) } : null)
+const enrichVideo = (v) => (v ? { ...enrichDraw(v), durationText: v.duration ? formatClock(v.duration) : '' } : null)
 
 /* ---------- 当前播放 ---------- */
 const latestPeriod = ref('')
@@ -30,9 +33,12 @@ const queryPeriod = computed(() => (typeof route.query.period === 'string' ? rou
 const currentVideo = computed(() => enrichVideo(current.value))
 const isLatest = computed(() => !!current.value && current.value.period === latestPeriod.value)
 
+let latestFor = ''
 async function ensureLatestPeriod() {
-  if (latestPeriod.value) return latestPeriod.value
-  const res = await getLatestDraw()
+  if (latestFor === lottery.value) return latestPeriod.value
+  const code = lottery.value
+  const res = await getLatestDraw(code)
+  latestFor = code
   latestPeriod.value = res.current?.period || ''
   return latestPeriod.value
 }
@@ -47,7 +53,8 @@ async function loadCurrent() {
     const period = queryPeriod.value || latest
     // 从“回放”或列表点进来的才自动播放
     autoplay.value = !!queryPeriod.value
-    const detail = isValidPeriod(period) ? await getVideoDetail(period) : null
+    const issue = normalizeIssue(period, lottery.value)
+    const detail = issue ? await getVideoDetail(issue, lottery.value) : null
     if (my !== loadToken) return
     current.value = detail
     if (!detail) currentError.value = period ? `没有找到第 ${period} 期的开奖视频` : '暂无开奖视频'
@@ -60,13 +67,15 @@ async function loadCurrent() {
   }
 }
 
-watch(queryPeriod, loadCurrent, { immediate: true })
+watch([queryPeriod, lottery], loadCurrent, { immediate: true })
 
 function openPeriod(period) {
-  router.push({ name: 'video', query: { period } })
+  router.push({ name: 'video', query: { lottery: lottery.value, period } })
 }
-const goPrev = () => current.value && openPeriod(shiftPeriod(current.value.period, -1))
-const goNext = () => current.value && !isLatest.value && openPeriod(shiftPeriod(current.value.period, 1))
+const prevPeriod = computed(() => (current.value ? shiftIssue(current.value.period, -1, lottery.value) : null))
+const nextPeriod = computed(() => (current.value && !isLatest.value ? shiftIssue(current.value.period, 1, lottery.value) : null))
+const goPrev = () => prevPeriod.value && openPeriod(prevPeriod.value)
+const goNext = () => nextPeriod.value && openPeriod(nextPeriod.value)
 
 /* ---------- 列表与筛选 ---------- */
 const form = reactive({ date: '', period: '' })
@@ -74,7 +83,7 @@ const filters = reactive({ date: '', period: '' })
 const formError = ref('')
 
 const pageSize = computed(() => (isMobile.value ? PAGE_SIZE.mobile : PAGE_SIZE.videos))
-const videos = usePagedList((p) => getVideoList({ ...p, date: filters.date, period: filters.period }), {
+const videos = usePagedList((p) => getVideoList({ ...p, lottery: lottery.value, date: filters.date, period: filters.period }), {
   pageSize,
   isMobile,
 })
@@ -83,9 +92,9 @@ const filtering = computed(() => !!(filters.date || filters.period))
 
 function search() {
   const raw = form.period.trim()
-  const period = raw ? normalizePeriod(raw) : ''
+  const period = raw ? normalizeIssue(raw, lottery.value) : ''
   if (raw && !period) {
-    formError.value = '期号为 年份+3位天数，如 2026285'
+    formError.value = issueHint(lottery.value)
     return
   }
   formError.value = ''
@@ -108,18 +117,35 @@ function changePage(p) {
   videos.goTo(p).then(() => listSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
 }
 
+// 切换彩种：清空筛选，重新加载列表（当前播放由上面的 watch 重新加载）
+watch(lottery, () => {
+  form.date = ''
+  form.period = ''
+  formError.value = ''
+  filters.date = ''
+  filters.period = ''
+  videos.reset()
+})
+
 videos.reset()
 </script>
 
 <template>
   <div class="video-page">
+    <div class="container switch-row">
+      <LotterySwitch :model-value="lottery" :games="games" @update:model-value="setLottery" />
+    </div>
     <!-- 播放区 -->
     <section class="stage container" aria-label="正在播放">
       <div class="player-col">
         <div v-if="currentLoading && !current" class="player-placeholder">加载中…</div>
         <div v-else-if="currentError" class="player-placeholder">
           <p>{{ currentError }}</p>
-          <RouterLink v-if="queryPeriod" :to="{ name: 'video' }" class="btn">观看最新一期</RouterLink>
+          <RouterLink v-if="queryPeriod" :to="{ name: 'video', query: { lottery } }" class="btn">观看最新一期</RouterLink>
+        </div>
+        <div v-else-if="currentVideo && !currentVideo.src" class="player-placeholder">
+          <p>第 {{ currentVideo.period }} 期暂无开奖视频</p>
+          <span class="ph-sub">{{ game.name }}的开奖视频暂未提供，开奖号码见{{ isMobile ? '下方' : '右侧' }}</span>
         </div>
         <VideoPlayer
           v-else-if="currentVideo"
@@ -133,10 +159,10 @@ videos.reset()
 
         <div v-if="currentVideo" class="title-block">
           <h1 class="title">
-            <span class="pc-only">{{ LOTTERY.name }} </span>第 <span class="num">{{ currentVideo.period }}</span> 期 开奖回放
+            <span class="pc-only">{{ game.name }} </span>第 <span class="num">{{ currentVideo.period }}</span> 期 开奖回放
           </h1>
           <div class="sub">
-            {{ currentVideo.date }} {{ currentVideo.week }} {{ currentVideo.time }} · 时长 {{ currentVideo.durationText }}
+            {{ currentVideo.date }} {{ currentVideo.week }} {{ currentVideo.time }}<template v-if="currentVideo.durationText"> · 时长 {{ currentVideo.durationText }}</template>
           </div>
         </div>
       </div>
@@ -145,12 +171,12 @@ videos.reset()
         <div class="side-label pc-only">本期开奖号码</div>
         <DrawBalls :draw="currentVideo" :size="isMobile ? 'md' : 'sm'" show-zodiac class="side-balls" />
         <div class="side-nav">
-          <button type="button" class="btn" @click="goPrev"><Icon name="left" :size="16" />上一期</button>
-          <button type="button" class="btn" :disabled="isLatest" @click="goNext">
+          <button type="button" class="btn" :disabled="!prevPeriod" @click="goPrev"><Icon name="left" :size="16" />上一期</button>
+          <button type="button" class="btn" :disabled="!nextPeriod" @click="goNext">
             下一期<Icon name="right" :size="16" />
           </button>
         </div>
-        <RouterLink to="/results" class="side-link pc-only">查看全部开奖结果 →</RouterLink>
+        <RouterLink :to="{ name: 'results', query: { lottery } }" class="side-link pc-only">查看全部开奖结果 →</RouterLink>
       </aside>
     </section>
 
@@ -261,6 +287,13 @@ videos.reset()
 .player-placeholder p {
   margin: 0;
 }
+.ph-sub {
+  font-size: 13px;
+  color: var(--faint);
+}
+.switch-row {
+  margin-bottom: -24px;
+}
 .title-block {
   display: flex;
   flex-direction: column;
@@ -363,6 +396,10 @@ videos.reset()
   .video-page {
     padding-top: 0;
     gap: 24px;
+  }
+  .switch-row {
+    padding-top: 12px;
+    margin-bottom: -12px;
   }
   .stage {
     padding-left: 0;

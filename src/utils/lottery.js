@@ -18,11 +18,36 @@ export function getWave(n) {
   return 'green'
 }
 
+/** 公历年 → 当年春节（月, 日）；与后端 LotteryZodiac 一致，表外年份按 2 月 4 日近似 */
+const SPRING_FESTIVAL = {
+  2024: [2, 10],
+  2025: [1, 29],
+  2026: [2, 17],
+  2027: [2, 6],
+  2028: [1, 26],
+  2029: [2, 13],
+  2030: [2, 3],
+}
+
+/** 开奖地某天（dayKey）所在的农历年：春节前属于上一年 */
+export function lunarYearOf(dayKey) {
+  const d = new Date(dayKey)
+  const year = d.getUTCFullYear()
+  const [m, day] = SPRING_FESTIVAL[year] || [2, 4]
+  return dayKey < Date.UTC(year, m - 1, day) ? year - 1 : year
+}
+
+/** 某个农历年的生肖：2026 → 马 */
+export function zodiacOfYear(year) {
+  return ZODIAC_ORDER[(((year - 4) % 12) + 12) % 12]
+}
+
 /**
  * 号码生肖：01 为当年生肖，号码每 +1 生肖倒退一位，12 个一轮。
  * 例：2026 马年 → 01 马、02 蛇、03 龙 … 12 羊、13 马。
+ * year 为农历年，默认今天所在的农历年。
  */
-export function getZodiac(n, year = LOTTERY.zodiacYear) {
+export function getZodiac(n, year = lunarYearOf(localDayKey())) {
   const yearIdx = (((year - 4) % 12) + 12) % 12
   const idx = (((yearIdx - ((n - 1) % 12)) % 12) + 12) % 12
   return ZODIAC_ORDER[idx]
@@ -32,24 +57,42 @@ export function pad2(n) {
   return String(n).padStart(2, '0')
 }
 
-/** 把号码转成展示用对象 */
-export function toBall(n) {
-  return { value: n, num: pad2(n), wave: getWave(n), zodiac: getZodiac(n) }
+/** 把号码转成展示用对象；year 为开奖日所在的农历年 */
+export function toBall(n, year) {
+  return { value: n, num: pad2(n), wave: getWave(n), zodiac: getZodiac(n, year) }
 }
 
-/** 把接口返回的开奖记录补充展示字段 */
+/**
+ * 把接口返回的开奖记录补充展示字段。
+ * 日期、时间取自 drawAt（香港期号不是按天编的）；生肖按开奖日所在农历年。
+ */
 export function enrichDraw(draw) {
   if (!draw) return null
-  const dayKey = dayKeyOfPeriod(draw.period)
+  const at = Date.parse(draw.drawAt)
+  const dayKey = Number.isNaN(at) ? dayKeyOfPeriod(draw.period) : localDayKey(at)
+  const year = lunarYearOf(dayKey)
   return {
     ...draw,
-    balls: draw.numbers.map(toBall),
-    specialBall: toBall(draw.special),
+    balls: draw.numbers.map((n) => toBall(n, year)),
+    specialBall: toBall(draw.special, year),
+    zodiacYear: year,
+    zodiacName: zodiacOfYear(year),
     date: formatDate(dayKey),
     md: formatMonthDay(dayKey),
     week: weekdayOf(dayKey),
-    time: LOTTERY.drawTime,
+    time: Number.isNaN(at) ? LOTTERY.drawTime : localClock(at),
   }
+}
+
+/** 时间戳 → 开奖地 'HH:mm' */
+export function localClock(ms) {
+  const d = new Date(ms + LOTTERY.utcOffsetHours * 3600000)
+  return `${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`
+}
+
+/** 时间戳 → 开奖地 'YYYY-MM-DD HH:mm' */
+export function formatDateTime(ms) {
+  return `${formatDate(localDayKey(ms))} ${localClock(ms)}`
 }
 
 /* ---------------- 时间与期号 ----------------
@@ -120,6 +163,29 @@ export function normalizePeriod(input) {
 
 export function shiftPeriod(period, days) {
   return periodOf(dayKeyOfPeriod(period) + days * DAY)
+}
+
+/* ---------------- 按彩种区分的期号规则 ----------------
+ * 新澳门、澳门：年份 + 当年第几天（可输入日期换算）；香港：年份 + 3 位当年序号（与日期无关）。
+ */
+
+/** 用户输入转期号；无效返回 null */
+export function normalizeIssue(input, lottery = 'xam') {
+  if (lottery !== 'hk') return normalizePeriod(input)
+  const s = String(input ?? '').trim()
+  return /^\d{7}$/.test(s) && Number(s.slice(4)) >= 1 ? s : null
+}
+
+/** 期号格式提示 */
+export function issueHint(lottery = 'xam') {
+  return lottery === 'hk' ? '期号为 年份+3位序号，如 2026112' : '期号为 年份+3位天数，如 2026285'
+}
+
+/** 相邻一期；香港跨年时无法推算，返回 null */
+export function shiftIssue(period, delta, lottery = 'xam') {
+  if (lottery !== 'hk') return shiftPeriod(period, delta)
+  const seq = Number(String(period).slice(4)) + delta
+  return seq >= 1 && seq <= 999 ? `${String(period).slice(0, 4)}${String(seq).padStart(3, '0')}` : null
 }
 
 /** 'YYYY-MM-DD' → dayKey，非法返回 null */

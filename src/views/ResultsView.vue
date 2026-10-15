@@ -1,16 +1,19 @@
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { getDrawHistory } from '../api/index.js'
 import { PAGE_SIZE } from '../config/lottery.js'
-import { enrichDraw, normalizePeriod } from '../utils/lottery.js'
+import { enrichDraw, issueHint, normalizeIssue } from '../utils/lottery.js'
 import { useIsMobile } from '../composables/useMediaQuery.js'
 import { usePagedList } from '../composables/usePagedList.js'
+import { useLottery } from '../composables/useLottery.js'
+import LotterySwitch from '../components/LotterySwitch.vue'
 import HistoryList from '../components/HistoryList.vue'
 import AppPagination from '../components/AppPagination.vue'
 import LoadMore from '../components/LoadMore.vue'
 import Icon from '../components/Icon.vue'
 
 const isMobile = useIsMobile()
+const { games, code: lottery, game, setLottery } = useLottery()
 
 /* ---------- 筛选 ---------- */
 const form = reactive({ date: '', period: '' })
@@ -19,7 +22,7 @@ const formError = ref('')
 const filtering = computed(() => !!(filters.date || filters.period))
 
 const pageSize = computed(() => (isMobile.value ? PAGE_SIZE.mobile : PAGE_SIZE.history))
-const history = usePagedList((p) => getDrawHistory({ ...p, date: filters.date, period: filters.period }), {
+const history = usePagedList((p) => getDrawHistory({ ...p, lottery: lottery.value, date: filters.date, period: filters.period }), {
   pageSize,
   isMobile,
 })
@@ -27,9 +30,9 @@ const items = computed(() => history.list.value.map(enrichDraw))
 
 function search() {
   const raw = form.period.trim()
-  const period = raw ? normalizePeriod(raw) : ''
+  const period = raw ? normalizeIssue(raw, lottery.value) : ''
   if (raw && !period) {
-    formError.value = '期号为 年份+3位天数，如 2026285'
+    formError.value = issueHint(lottery.value)
     return
   }
   formError.value = ''
@@ -52,15 +55,26 @@ function changePage(p) {
   history.goTo(p).then(() => listSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
 }
 
+// 切换彩种：清空筛选，重新加载
+watch(lottery, () => {
+  form.date = ''
+  form.period = ''
+  formError.value = ''
+  filters.date = ''
+  filters.period = ''
+  history.reset()
+})
+
 history.reset()
 </script>
 
 <template>
   <div class="container page">
     <section ref="listSection" class="results" aria-labelledby="results-title">
+      <LotterySwitch :model-value="lottery" :games="games" class="switch" @update:model-value="setLottery" />
       <div class="head">
         <div class="title-wrap">
-          <h1 id="results-title" class="page-title">开奖公告</h1>
+          <h1 id="results-title" class="page-title">{{ game.name }}开奖公告</h1>
           <span class="section-meta">
             共 {{ history.total.value }} 期<template v-if="!isMobile && !filtering"> · 每页 {{ pageSize }} 期</template>
           </span>
@@ -78,7 +92,7 @@ history.reset()
               type="text"
               inputmode="numeric"
               maxlength="10"
-              placeholder="如 2026285"
+              :placeholder="lottery === 'hk' ? '如 2026112' : '如 2026285'"
               :aria-invalid="!!formError"
               aria-describedby="results-period-error"
             />
@@ -99,7 +113,7 @@ history.reset()
       </div>
       <template v-else>
         <div :class="{ 'is-loading': history.loading.value && !isMobile }">
-          <HistoryList :items="items" :is-mobile="isMobile" />
+          <HistoryList :items="items" :is-mobile="isMobile" :lottery="lottery" />
         </div>
         <LoadMore
           v-if="isMobile"
@@ -132,6 +146,9 @@ history.reset()
   flex-direction: column;
   gap: 24px;
   scroll-margin-top: 80px;
+}
+.switch {
+  align-self: flex-start;
 }
 .head {
   display: flex;

@@ -156,17 +156,34 @@ test('真实接口：请求路径、参数与返回映射', async () => {
   }
 
   assert.equal((await latestApi()).next.period, '2026285')
+  assert.equal(calls.at(-1), '/api/app/lottery/draw/latest?lottery=xam')
   const h = await historyApi({ page: 2, pageSize: 10 })
   assert.deepEqual(h, { total: 1, list: [draw] })
-  assert.equal(calls.at(-1), '/api/app/lottery/draw/list?pageNum=2&pageSize=10')
+  assert.equal(calls.at(-1), '/api/app/lottery/draw/list?lottery=xam&pageNum=2&pageSize=10')
 
+  // 日期交给后端筛选；期号可输入日期，按彩种换算
   const byDate = await videoApi({ page: 1, pageSize: 10, date: '2026-10-11' })
-  assert.equal(calls.at(-1), '/api/app/lottery/draw/list?pageNum=1&pageSize=10&issueNo=2026284')
+  assert.equal(calls.at(-1), '/api/app/lottery/draw/list?lottery=xam&pageNum=1&pageSize=10&date=2026-10-11')
   assert.equal(byDate.list[0].type, 'mp4')
+  await videoApi({ period: '20261011' })
+  assert.equal(calls.at(-1), '/api/app/lottery/draw/list?lottery=xam&pageNum=1&pageSize=10&issueNo=2026284')
 
-  const n = calls.length
-  assert.deepEqual(await videoApi({ date: '2026-10-11', period: '2026283' }), { total: 0, list: [] })
-  assert.equal(calls.length, n, '日期与期号不一致时不发请求')
+  // 澳门、香港：没有 videoUrl 时 src 为空；m3u8 识别为 hls
+  const hk = await videoApi({ lottery: 'hk', period: '2026112' })
+  assert.equal(calls.at(-1), '/api/app/lottery/draw/list?lottery=hk&pageNum=1&pageSize=10&issueNo=2026112')
+  assert.equal(hk.list[0].src, null)
+  globalThis.fetch = async (url) => {
+    calls.push(url)
+    return { ok: true, url, headers: new Headers({ 'content-type': 'application/json' }), json: async () => ({ code: 200, data: { ...draw, videoUrl: 'https://v.example/a.m3u8' } }) }
+  }
+  const amVideo = await detailApi('2026284', { lottery: 'am' })
+  assert.equal(calls.at(-1), '/api/app/lottery/draw/2026284?lottery=am')
+  assert.equal(amVideo.type, 'hls')
+  globalThis.fetch = async (url) => {
+    calls.push(url)
+    const body = url.endsWith('/2026286?lottery=xam') ? { code: 200, data: null } : url.includes('/bad') ? { code: 500, msg: '期号格式应为 年份+3位天数，如 2026285' } : { code: 200, data: draw }
+    return { ok: true, url, headers: new Headers({ 'content-type': 'application/json' }), json: async () => body }
+  }
 
   assert.equal((await detailApi('2026284')).special, 9)
   assert.equal(await detailApi('2026286'), null)
@@ -224,4 +241,48 @@ test('mock 图库：类别与分页', async () => {
   assert.equal(p1.list.length, 20)
   assert.equal(p3.list.length, p1.total - 40)
   assert.equal(new Set([...p1.list, ...p3.list].map((i) => i.id)).size, p1.list.length + p3.list.length)
+})
+
+test('生肖按开奖日所在农历年：春节前后不同', () => {
+  // 2026-02-16 仍是蛇年，2026-02-17 起马年
+  const before = enrichDraw({ period: '2026047', drawAt: '2026-02-16T21:32:00+08:00', numbers: [1, 2, 3, 4, 5, 6], special: 13 })
+  const after = enrichDraw({ period: '2026048', drawAt: '2026-02-17T21:32:00+08:00', numbers: [1, 2, 3, 4, 5, 6], special: 13 })
+  assert.equal(before.balls[0].zodiac, '蛇')
+  assert.equal(after.balls[0].zodiac, '马')
+  assert.equal(after.zodiacName, '马')
+  // 与澳门官方数据一致：2025-12-31 42→鼠、45→鸡
+  const am = enrichDraw({ period: '2025365', drawAt: '2025-12-31T22:32:32+08:00', numbers: [42, 45, 48, 37, 15, 8], special: 27 })
+  assert.deepEqual(am.balls.map((b) => b.zodiac), ['鼠', '鸡', '马', '蛇', '兔', '狗'])
+  assert.equal(am.time, '22:32')
+})
+
+test('期号规则按彩种：香港为年份+序号，不能用日期换算', async () => {
+  const { normalizeIssue, shiftIssue } = await import('../src/utils/lottery.js')
+  assert.equal(normalizeIssue('20261012', 'am'), '2026285')
+  assert.equal(normalizeIssue('20261012', 'hk'), null)
+  assert.equal(normalizeIssue('2026112', 'hk'), '2026112')
+  assert.equal(shiftIssue('2026112', 1, 'hk'), '2026113')
+  assert.equal(shiftIssue('2026001', -1, 'hk'), null)
+  assert.equal(shiftIssue('2026001', -1, 'xam'), '2025365')
+})
+
+test('mock 三个彩种：澳门 22:32、香港按排期', async () => {
+  const { getLatestDraw: latest, getDrawHistory: history } = await import('../src/api/mock.js')
+  // 2026-10-15（周四）22:00 北京时间
+  const now = Date.UTC(2026, 9, 15, 14, 0)
+  const am = await latest({ lottery: 'am', now })
+  assert.equal(am.current.period, '2026287')
+  assert.equal(am.next.period, '2026288')
+  assert.equal(new Date(am.next.drawAt).getTime(), Date.UTC(2026, 9, 15, 14, 32))
+  const hk = await latest({ lottery: 'hk', now })
+  assert.equal(new Date(hk.current.drawAt).getTime(), Date.UTC(2026, 9, 15, 13, 30))
+  assert.equal(new Date(hk.next.drawAt).getTime(), Date.UTC(2026, 9, 17, 13, 30))
+  assert.equal(Number(hk.next.period), Number(hk.current.period) + 1)
+  const byDate = await history({ lottery: 'hk', date: '2026-10-13', now })
+  assert.equal(byDate.total, 1)
+  assert.equal((await history({ lottery: 'hk', date: '2026-10-14', now })).total, 0)
+  // 同一期号在不同彩种号码不同
+  const x = await history({ lottery: 'xam', period: '2026287', now })
+  const a = await history({ lottery: 'am', period: '2026287', now })
+  assert.notDeepEqual(x.list[0].numbers, a.list[0].numbers)
 })

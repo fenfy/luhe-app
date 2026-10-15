@@ -26,13 +26,14 @@ const fmtDate = (iso) => {
     class="vrow"
     :class="{ on: active }"
     :aria-current="active ? 'true' : undefined"
-    :aria-label="`播放第 ${video.period} 期回放`"
+    :aria-label="video.src ? `播放第 ${video.period} 期回放` : `查看第 ${video.period} 期（暂无视频）`"
     @click="$emit('select', video.period)"
   >
     <div class="thumb">
       <img v-if="video.cover" :src="video.cover" alt="" class="cover-img" loading="lazy" />
-      <span class="thumb-play"><Icon name="play" :size="16" /></span>
-      <span class="thumb-dur num">{{ video.durationText }}</span>
+      <span v-if="video.src" class="thumb-play"><Icon name="play" :size="16" /></span>
+      <span v-else class="thumb-none">暂无视频</span>
+      <span v-if="video.durationText" class="thumb-dur num">{{ video.durationText }}</span>
     </div>
 
     <div class="info">
@@ -46,12 +47,22 @@ const fmtDate = (iso) => {
     <span class="dur num">{{ video.durationText }}</span>
 
     <span class="action" aria-hidden="true">
-      <Icon name="play" :size="14" /><span class="action-text">{{ active ? '播放中' : '播放' }}</span>
+      <template v-if="video.src"><Icon name="play" :size="14" /><span class="action-text">{{ active ? '播放中' : '播放' }}</span></template>
+      <span v-else class="action-text">查看</span>
     </span>
   </button>
 </template>
 
 <style scoped>
+.thumb-none {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+}
 /* ---------- PC：列表行 ---------- */
 .vrow {
   display: grid;

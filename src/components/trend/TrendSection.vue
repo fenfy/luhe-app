@@ -9,6 +9,8 @@ import TrendHBars from './TrendHBars.vue'
 const props = defineProps({
   /** special（特码）/ normal（正码） */
   type: { type: String, required: true },
+  /** 彩种代码 */
+  lottery: { type: String, default: 'xam' },
   isMobile: Boolean,
 })
 
@@ -31,7 +33,7 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    const res = await getTrend({ type: props.type, periods: periods.value })
+    const res = await getTrend({ lottery: props.lottery, type: props.type, periods: periods.value })
     if (my === token) data.value = res
   } catch (e) {
     if (my === token) error.value = e?.message || '加载失败'
@@ -39,7 +41,7 @@ async function load() {
     if (my === token) loading.value = false
   }
 }
-watch(periods, load, { immediate: true })
+watch([periods, () => props.lottery], load, { immediate: true })
 
 const hits = computed(() => data.value?.hits || 0)
 const pct = (v) => (hits.value ? ((v / hits.value) * 100).toFixed(1) : '0.0')

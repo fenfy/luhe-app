@@ -67,6 +67,7 @@ tests/                     node:test 单元测试
 
 | 接口 | 返回 |
 | --- | --- |
+| `GET /app/lottery/games` | `data = [{ code, name, drawTime, schedule }]` |
 | `GET /app/lottery/draw/latest` | `data = { current: Draw \| null, next: { period, drawAt } }` |
 | `GET /app/lottery/draw/list?pageNum&pageSize&issueNo` | `{ rows: Draw[], total }`，期号倒序 |
 | `GET /app/lottery/draw/{issueNo}` | `data = Draw \| null`（未开奖或未公布时为 null） |
@@ -90,3 +91,18 @@ Draw = { period: '20261011', drawAt: '2026-10-11T21:32:00+08:00', numbers: [6 �
 - 首页显示前几个类别（PC 8 个、手机 5 个）和当前类别最新的 12 / 10 张；数量在 `src/config/lottery.js` 的 `GALLERY` 里改。
 - 图片地址是后端返回的 `/profile/...`：开发时 Vite 把 `/profile` 代理到 luhe-app；生产环境在 Nginx 加 `location /profile/`（见 `deploy/nginx.conf.example`）。图片放在其他域名时设置 `VITE_FILE_BASE`。
 - luhe-app 需要配置 `luhe.profile`（与后台一致），才能在开发时提供 `/profile/**`。
+
+## 彩种
+
+站点有三个彩种，首页、开奖公告、开奖视频、走势图顶部都可以切换，URL 带 `?lottery=`，并记住上次选择：
+
+| 代码 | 名称 | 开奖 | 数据来源 | 期号 |
+| --- | --- | --- | --- | --- |
+| `xam` | 新澳门六合彩 | 每天 21:32 | 后台随机开奖 | 年份 + 当年第几天 |
+| `am` | 澳门六合彩 | 每天 22:32 | 后台定时同步 macaujc.com 接口 | 年份 + 当年第几天 |
+| `hk` | 香港六合彩 | 按排期（日期不固定） | 后台「官方开奖」手工录入 / 批量导入 | 年份 + 3 位当年序号 |
+
+- 接口统一加 `lottery` 参数（默认 `xam`），另有 `GET /app/lottery/games` 返回彩种列表；后端不可用时用 `src/config/lottery.js` 的 `GAMES`。
+- 香港没有排期时，首页显示「下期开奖时间待公布」；到了开奖时间但号码还没录入时显示「开奖中」并轮询。
+- 澳门、香港暂无视频来源：后端记录里填了 `videoUrl` 才能播放（mp4 / m3u8），否则视频页显示「暂无开奖视频」和号码。
+- 生肖按每期开奖日所在的农历年计算（春节前属上一年），与后端 `LotteryZodiac` 一致。

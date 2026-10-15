@@ -1,5 +1,6 @@
 /**
- * 彩种配置：改名称、开奖时间、生肖年份都在这里。
+ * 新澳门六合彩的开奖配置（澳门、香港见下方 GAMES）。
+ * 生肖按每期开奖日所在的农历年计算（utils/lottery.js 的春节日期表）。
  */
 export const LOTTERY = {
   /** 彩种名称 */
@@ -8,13 +9,24 @@ export const LOTTERY = {
   drawTime: '21:32',
   /** 开奖地时区相对 UTC 的小时数（澳门 UTC+8） */
   utcOffsetHours: 8,
-  /** 生肖对照年份：01 号对应该年生肖（2026 = 马年） */
-  zodiacYear: 2026,
   /** 开奖揭晓动画中每个号码的间隔（毫秒），7 个号码共约 7 秒 */
   revealIntervalMs: 1000,
   /** mock 数据的第一期日期（开奖地日期） */
   mockStartDate: '2025-01-01',
 }
+
+/**
+ * 彩种（后端 /app/lottery/games 加载失败时用这份）。
+ * schedule：daily 每天固定时刻开奖；scheduled 按排期开奖（日期不固定，香港）。
+ */
+export const GAMES = [
+  { code: 'xam', name: '新澳门六合彩', short: '新澳门', drawTime: '21:32', schedule: 'daily' },
+  { code: 'am', name: '澳门六合彩', short: '澳门', drawTime: '22:32', schedule: 'daily' },
+  { code: 'hk', name: '香港六合彩', short: '香港', drawTime: null, schedule: 'scheduled' },
+]
+
+/** 默认彩种 */
+export const DEFAULT_GAME = 'xam'
 
 /** 分页配置 */
 export const PAGE_SIZE = {

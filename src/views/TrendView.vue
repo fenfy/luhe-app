@@ -1,22 +1,25 @@
 <script setup>
-import { LOTTERY } from '../config/lottery.js'
 import { useIsMobile } from '../composables/useMediaQuery.js'
+import { useLottery } from '../composables/useLottery.js'
+import LotterySwitch from '../components/LotterySwitch.vue'
 import TrendSection from '../components/trend/TrendSection.vue'
 
 const isMobile = useIsMobile()
+const { games, code: lottery, game, setLottery } = useLottery()
 </script>
 
 <template>
   <div class="container page">
     <header class="page-head">
-      <h1 class="page-title">走势图</h1>
+      <LotterySwitch :model-value="lottery" :games="games" class="switch" @update:model-value="setLottery" />
+      <h1 class="page-title">{{ game.name }}走势图</h1>
       <p class="page-sub">
-        {{ LOTTERY.name }}近期开奖统计：号码、波色、尾数、波段、生肖的出现次数。特码另附当前遗漏期数，可分别切换统计期数。
+        {{ game.name }}近期开奖统计：号码、波色、尾数、波段、生肖的出现次数。特码另附当前遗漏期数，可分别切换统计期数。
       </p>
     </header>
 
-    <TrendSection type="special" :is-mobile="isMobile" />
-    <TrendSection type="normal" :is-mobile="isMobile" />
+    <TrendSection type="special" :lottery="lottery" :is-mobile="isMobile" />
+    <TrendSection type="normal" :lottery="lottery" :is-mobile="isMobile" />
   </div>
 </template>
 
@@ -32,6 +35,10 @@ const isMobile = useIsMobile()
   flex-direction: column;
   gap: 6px;
   margin-bottom: -16px;
+}
+.switch {
+  align-self: flex-start;
+  margin-bottom: 12px;
 }
 .page-title {
   font-size: 28px;

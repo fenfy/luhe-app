@@ -3,13 +3,15 @@ import DrawBalls from './DrawBalls.vue'
 import LotteryBall from './LotteryBall.vue'
 import Icon from './Icon.vue'
 
-defineProps({
+const props = defineProps({
   /** enrichDraw() 后的列表 */
   items: { type: Array, required: true },
   isMobile: Boolean,
+  /** 彩种代码，回放链接用 */
+  lottery: { type: String, default: 'xam' },
 })
 
-const replayTo = (period) => ({ name: 'video', query: { period } })
+const replayTo = (period) => ({ name: 'video', query: { lottery: props.lottery, period } })
 
 /** ISO 时间 → 本地 yyyy-MM-dd HH:mm */
 const fmtDate = (iso) => {
