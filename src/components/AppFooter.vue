@@ -1,7 +1,7 @@
 <template>
   <footer class="footer">
     <div class="container footer-inner">
-      <span>© {{ year }} 路合开奖</span>
+      <span>© {{ year }} 云顶六合彩</span>
       <span>开奖数据仅供参考，请理性对待</span>
     </div>
   </footer>

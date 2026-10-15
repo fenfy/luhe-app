@@ -39,7 +39,7 @@ const router = createRouter({
 })
 
 router.afterEach((to) => {
-  document.title = to.meta.title ? `${to.meta.title} · 路合开奖` : '路合开奖'
+  document.title = to.meta.title ? `${to.meta.title} · 云顶六合彩` : '云顶六合彩'
 })
 
 export default router

@@ -1,13 +1,13 @@
 <script setup>
-import BrandMark from './BrandMark.vue'
+import logoUrl from '../assets/logo.png'
 </script>
 
 <template>
   <header class="header">
     <div class="container header-inner">
-      <RouterLink to="/" class="brand" aria-label="路合开奖 首页">
-        <BrandMark class="brand-mark" />
-        <span class="brand-name">路合开奖</span>
+      <RouterLink to="/" class="brand" aria-label="云顶六合彩 首页">
+        <img :src="logoUrl" alt="云顶六合彩 logo" class="brand-mark" />
+        <span class="brand-name">云顶六合彩</span>
       </RouterLink>
       <nav aria-label="主导航" class="nav">
         <RouterLink to="/" class="nav-link" exact-active-class="is-active">首页</RouterLink>
@@ -47,8 +47,10 @@ import BrandMark from './BrandMark.vue'
   color: var(--text);
 }
 .brand-mark {
-  width: 36px;
-  height: 36px;
+  width: 66px;
+  height: 66px;
+  object-fit: cover;
+  display: block;
 }
 .brand-name {
   font-size: 20px;

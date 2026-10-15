@@ -18,6 +18,8 @@ export default defineConfig(({ mode }) => {
   }
   return {
     plugins: [vue()],
+    // 打包输出目录改为 app（默认 dist）
+    build: { outDir: 'app' },
     // npm run dev
     server: { host: true, port: 5173, proxy: apiProxy },
     // npm run preview（预览打包结果）不读 server 配置，需要单独配一份
