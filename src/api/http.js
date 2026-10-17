@@ -55,7 +55,7 @@ export async function getDrawHistory(params = {}) {
 }
 
 /**
- * 开奖视频：新澳门暂用测试视频（videoSource.js）；澳门、香港使用后端的 videoUrl，没有时 src 为空
+ * 开奖视频：云顶暂用测试视频（videoSource.js）；澳门、香港使用后端的 videoUrl，没有时 src 为空
  */
 function toVideo(draw, lottery) {
   if (lottery === 'xam') return withDemoVideo(draw)

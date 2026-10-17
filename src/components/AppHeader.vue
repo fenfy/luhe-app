@@ -47,7 +47,6 @@ import logoUrl from '../assets/logo.png'
   color: var(--text);
 }
 .brand-mark {
-  width: 66px;
   height: 66px;
   object-fit: cover;
   display: block;

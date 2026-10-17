@@ -1,7 +1,7 @@
 /**
  * Mock 实现（离线开发用，VITE_USE_MOCK=true 时启用）：按当前时间推算三个彩种的开奖，
  * 号码由彩种 + 期号决定（同一期永远相同）。返回结构与真实接口一致，见 README「接口约定」。
- * - xam 新澳门：每天 21:32；am 澳门：每天 22:32；期号为 年份 + 当年第几天
+ * - xam 云顶：每天 21:32；am 澳门：每天 22:32；期号为 年份 + 当年第几天
  * - hk 香港：每周二、四、六 21:30；期号为 年份 + 当年序号
  */
 import { LOTTERY, GAMES } from '../config/lottery.js'
@@ -89,7 +89,7 @@ function drawOf(lottery, item) {
 
 function videoOf(lottery, item) {
   const d = drawOf(lottery, item)
-  // 新澳门用测试视频；澳门、香港暂无视频来源
+  // 云顶用测试视频；澳门、香港暂无视频来源
   return lottery === 'xam' ? withDemoVideo(d) : { ...d, videoUrl: null, src: null, type: null, duration: null, cover: null }
 }
 

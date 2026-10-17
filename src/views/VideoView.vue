@@ -112,11 +112,6 @@ function resetFilters() {
   videos.reset()
 }
 
-const listSection = ref(null)
-function changePage(p) {
-  videos.goTo(p).then(() => listSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
-}
-
 // 切换彩种：清空筛选，重新加载列表（当前播放由上面的 watch 重新加载）
 watch(lottery, () => {
   form.date = ''
@@ -226,23 +221,6 @@ videos.reset()
             @select="openPeriod"
           />
         </div>
-        <LoadMore
-          v-if="isMobile"
-          :loading="videos.loading.value"
-          :has-more="videos.hasMore.value"
-          :error="videos.error.value"
-          :shown="videos.list.value.length"
-          :total="videos.total.value"
-          @load="videos.loadMore"
-          @retry="videos.retry"
-        />
-        <AppPagination
-          v-else
-          :page="videos.page.value"
-          :page-count="videos.pageCount.value"
-          :disabled="videos.loading.value"
-          @change="changePage"
-        />
       </template>
     </section>
   </div>

@@ -50,7 +50,7 @@ export function useGames() {
 }
 
 /**
- * 当前彩种：URL ?lottery= 优先，其次上次选择，默认新澳门。
+ * 当前彩种：URL ?lottery= 优先，其次上次选择，默认云顶。
  * setLottery 会记住选择并更新 URL（清掉期号等与彩种相关的参数）。
  */
 export function useLottery() {

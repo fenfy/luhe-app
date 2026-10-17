@@ -1,5 +1,5 @@
 <script setup>
-/** 彩种切换：新澳门 / 澳门 / 香港 */
+/** 彩种切换：云顶 / 澳门 / 香港 */
 defineProps({
   games: { type: Array, required: true },
   modelValue: { type: String, required: true },
