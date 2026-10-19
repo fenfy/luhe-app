@@ -48,6 +48,9 @@ const fmtDate = (iso) => {
   <section class="hero" aria-label="最新开奖">
     <div class="hero-main card">
       <div class="bg-seq num" aria-hidden="true">{{ seqText }}</div>
+      <RouterLink :to="{ name: 'results', query: { lottery: game.code } }" class="history-link">
+        历史开奖<Icon name="right" :size="16" />
+      </RouterLink>
       <div class="head">
         <div class="eyebrow"><span class="dot" />{{ game.name }} · {{ waiting ? '正在开奖' : '最新开奖' }}</div>
         <h1 class="title">
@@ -127,6 +130,28 @@ const fmtDate = (iso) => {
   color: var(--surface-hover);
   pointer-events: none;
   user-select: none;
+}
+.hero-main > .history-link {
+  position: absolute;
+  top: 28px;
+  right: 32px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 36px;
+  padding: 0 10px 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+.hero-main > .history-link:hover {
+  border-color: var(--gold);
+  color: var(--gold-text);
 }
 .head {
   display: flex;
@@ -258,6 +283,13 @@ const fmtDate = (iso) => {
   .eyebrow {
     font-size: 13px;
     gap: 8px;
+  }
+  .hero-main > .history-link {
+    top: 16px;
+    right: 16px;
+    min-height: 32px;
+    padding: 0 6px 0 10px;
+    font-size: 13px;
   }
   .title {
     font-size: 18px;
