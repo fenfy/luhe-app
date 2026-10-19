@@ -38,13 +38,13 @@ export async function getGames() {
 }
 
 /** GET /app/lottery/draw/latest → { current: Draw | null, next: { period, drawAt } | null } */
-export async function getLatestDraw({ lottery = 'xam' } = {}) {
+export async function getLatestDraw({ lottery = 'yd' } = {}) {
   const body = await get('/app/lottery/draw/latest', { lottery })
   return body.data
 }
 
 /** 筛选参数：期号按彩种规则校验；日期原样交给后端（香港期号不能由日期推算） */
-function listParams({ lottery = 'xam', page = 1, pageSize = 10, date = '', period = '' }) {
+function listParams({ lottery = 'yd', page = 1, pageSize = 10, date = '', period = '' }) {
   return { lottery, pageNum: page, pageSize, issueNo: period ? normalizeIssue(period, lottery) || period : '', date }
 }
 
@@ -55,23 +55,23 @@ export async function getDrawHistory(params = {}) {
 }
 
 /**
- * 开奖视频：云顶暂用测试视频（videoSource.js）；澳门、香港使用后端的 videoUrl，没有时 src 为空
+ * 开奖视频：云顶暂用测试视频（videoSource.js）；新澳门、香港使用后端的 videoUrl，没有时 src 为空
  */
 function toVideo(draw, lottery) {
-  if (lottery === 'xam') return withDemoVideo(draw)
+  if (lottery === 'yd') return withDemoVideo(draw)
   const url = draw.videoUrl || null
   return { ...draw, src: url, type: url ? (/\.m3u8(\?|$)/i.test(url) ? 'hls' : 'mp4') : null, duration: null, cover: null }
 }
 
 /** 开奖视频列表（最新在前） */
 export async function getVideoList(params = {}) {
-  const lottery = params.lottery || 'xam'
+  const lottery = params.lottery || 'yd'
   const body = await get('/app/lottery/draw/list', listParams(params))
   return { total: body.total, list: body.rows.map((d) => toVideo(d, lottery)) }
 }
 
 /** 单期视频；未开奖或未公布返回 null */
-export async function getVideoDetail(period, { lottery = 'xam' } = {}) {
+export async function getVideoDetail(period, { lottery = 'yd' } = {}) {
   const body = await get(`/app/lottery/draw/${encodeURIComponent(period)}`, { lottery })
   return body.data ? toVideo(body.data, lottery) : null
 }
@@ -81,7 +81,7 @@ export async function getVideoDetail(period, { lottery = 'xam' } = {}) {
  * { type, periods, fromIssue, toIssue, hits, numbers, waves, tails, segments, zodiacs }
  * 各项为 { key, count, miss }；miss 为当前遗漏期数，只有特码组有（正码组为 null）
  */
-export async function getTrend({ lottery = 'xam', type = 'special', periods = 30 } = {}) {
+export async function getTrend({ lottery = 'yd', type = 'special', periods = 30 } = {}) {
   const body = await get('/app/lottery/trend', { lottery, type, periods })
   return body.data
 }

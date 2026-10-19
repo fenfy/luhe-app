@@ -53,7 +53,7 @@ tests/                     node:test 单元测试
 
 ## 规则说明
 
-- **开奖时间**：每天 21:32（UTC+8），由后端配置 `app.lottery.draw-time` 决定，前端 `config/lottery.js` 的 `drawTime` 只用于显示和 mock，修改时两边保持一致。期号就是开奖日期 `yyyyMMdd`，例如 2026-10-11 对应 `20261011`，与后端 `app_draw.issue_no` 一致。
+- **开奖时间**：每天 22:32（UTC+8），由后端配置 `app.lottery.draw-time` 决定，前端 `config/lottery.js` 的 `drawTime` 只用于显示和 mock，修改时两边保持一致。期号就是开奖日期 `yyyyMMdd`，例如 2026-10-11 对应 `20261011`，与后端 `app_draw.issue_no` 一致。
 - **开奖与公布**：开奖由后台人工执行。某期要到开奖时刻后才对外可见，后台提前开奖也不会提前显示。
 - **生肖**：`config/lottery.js` 中的 `zodiacYear` 年生肖对应 01 号，号码每加 1，生肖往前退一位。例如 2026 马年：01 马、02 蛇、03 龙……12 羊、13 马。到了新的生肖年，只需修改这一个配置。
 - **波色**：标准六合彩红波、蓝波、绿波对照表，见 `utils/lottery.js`。
@@ -76,7 +76,7 @@ tests/                     node:test 单元测试
 | `GET /app/lottery/trend?type=special\|normal&periods=10\|20\|30\|50\|100` | `data = { periods, fromIssue, toIssue, hits, numbers, waves, tails, segments, zodiacs }`，每项 `{ key, count, miss }`，`miss` 仅特码有 |
 
 ```js
-Draw = { period: '20261011', drawAt: '2026-10-11T21:32:00+08:00', numbers: [6 个正码，升序], special: 特码 }
+Draw = { period: '20261011', drawAt: '2026-10-11T22:32:00+08:00', numbers: [6 个正码，升序], special: 特码 }
 ```
 
 开奖视频列表和视频页使用同一组接口：视频页的“开奖日期”和“期号”筛选都会转换成 `issueNo` 查询。播放地址暂时由 `src/api/videoSource.js` 补上测试视频。后端以后在 Draw 里返回 `src`、`type`（`mp4` / `hls`）、`duration`、`cover` 字段时，去掉 `http.js` 里对 `withDemoVideo` 的调用即可。
@@ -98,11 +98,11 @@ Draw = { period: '20261011', drawAt: '2026-10-11T21:32:00+08:00', numbers: [6 �
 
 | 代码 | 名称 | 开奖 | 数据来源 | 期号 |
 | --- | --- | --- | --- | --- |
-| `xam` | 云顶六合彩 | 每天 21:32 | 后台随机开奖 | 年份 + 当年第几天 |
-| `am` | 澳门六合彩 | 每天 22:32 | 后台定时同步 macaujc.com 接口 | 年份 + 当年第几天 |
+| `yd` | 云顶六合彩 | 每天 22:32 | 后台随机开奖 | 年份 + 当年第几天 |
+| `xam` | 新澳门六合彩 | 每天 21:32 | 后台定时同步 macaujc.com 接口 | 年份 + 当年第几天 |
 | `hk` | 香港六合彩 | 按排期（日期不固定） | 后台「官方开奖」手工录入 / 批量导入 | 年份 + 3 位当年序号 |
 
-- 接口统一加 `lottery` 参数（默认 `xam`），另有 `GET /app/lottery/games` 返回彩种列表；后端不可用时用 `src/config/lottery.js` 的 `GAMES`。
+- 接口统一加 `lottery` 参数（默认 `yd`），另有 `GET /app/lottery/games` 返回彩种列表；后端不可用时用 `src/config/lottery.js` 的 `GAMES`。
 - 香港没有排期时，首页显示「下期开奖时间待公布」；到了开奖时间但号码还没录入时显示「开奖中」并轮询。
-- 澳门、香港暂无视频来源：后端记录里填了 `videoUrl` 才能播放（mp4 / m3u8），否则视频页显示「暂无开奖视频」和号码。
+- 新澳门、香港暂无视频来源：后端记录里填了 `videoUrl` 才能播放（mp4 / m3u8），否则视频页显示「暂无开奖视频」和号码。
 - 生肖按每期开奖日所在的农历年计算（春节前属上一年），与后端 `LotteryZodiac` 一致。

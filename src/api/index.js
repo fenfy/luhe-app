@@ -11,7 +11,7 @@ const impl = import.meta.env.VITE_USE_MOCK === 'true' ? mock : http
 export const getGames = () => impl.getGames()
 
 /**
- * 以下接口都带 lottery：xam 云顶（默认）/ am 澳门 / hk 香港
+ * 以下接口都带 lottery：yd 云顶（默认）/ xam 新澳门 / hk 香港
  */
 
 /** 最新一期 + 下一期：{ current: Draw | null, next: { period, drawAt } | null }（香港未排期时 next 为空） */

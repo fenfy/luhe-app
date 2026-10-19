@@ -166,23 +166,23 @@ export function shiftPeriod(period, days) {
 }
 
 /* ---------------- 按彩种区分的期号规则 ----------------
- * 云顶、澳门：年份 + 当年第几天（可输入日期换算）；香港：年份 + 3 位当年序号（与日期无关）。
+ * 云顶、新澳门：年份 + 当年第几天（可输入日期换算）；香港：年份 + 3 位当年序号（与日期无关）。
  */
 
 /** 用户输入转期号；无效返回 null */
-export function normalizeIssue(input, lottery = 'xam') {
+export function normalizeIssue(input, lottery = 'yd') {
   if (lottery !== 'hk') return normalizePeriod(input)
   const s = String(input ?? '').trim()
   return /^\d{7}$/.test(s) && Number(s.slice(4)) >= 1 ? s : null
 }
 
 /** 期号格式提示 */
-export function issueHint(lottery = 'xam') {
+export function issueHint(lottery = 'yd') {
   return lottery === 'hk' ? '期号为 年份+3位序号，如 2026112' : '期号为 年份+3位天数，如 2026285'
 }
 
 /** 相邻一期；香港跨年时无法推算，返回 null */
-export function shiftIssue(period, delta, lottery = 'xam') {
+export function shiftIssue(period, delta, lottery = 'yd') {
   if (lottery !== 'hk') return shiftPeriod(period, delta)
   const seq = Number(String(period).slice(4)) + delta
   return seq >= 1 && seq <= 999 ? `${String(period).slice(0, 4)}${String(seq).padStart(3, '0')}` : null

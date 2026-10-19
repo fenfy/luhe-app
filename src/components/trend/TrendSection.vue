@@ -10,7 +10,7 @@ const props = defineProps({
   /** special（特码）/ normal（正码） */
   type: { type: String, required: true },
   /** 彩种代码 */
-  lottery: { type: String, default: 'xam' },
+  lottery: { type: String, default: 'yd' },
   isMobile: Boolean,
 })
 

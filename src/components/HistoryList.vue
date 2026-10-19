@@ -8,7 +8,7 @@ const props = defineProps({
   items: { type: Array, required: true },
   isMobile: Boolean,
   /** 彩种代码，回放链接用 */
-  lottery: { type: String, default: 'xam' },
+  lottery: { type: String, default: 'yd' },
 })
 
 const replayTo = (period) => ({ name: 'video', query: { lottery: props.lottery, period } })

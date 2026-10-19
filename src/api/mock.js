@@ -1,7 +1,7 @@
 /**
  * Mock 实现（离线开发用，VITE_USE_MOCK=true 时启用）：按当前时间推算三个彩种的开奖，
  * 号码由彩种 + 期号决定（同一期永远相同）。返回结构与真实接口一致，见 README「接口约定」。
- * - xam 云顶：每天 21:32；am 澳门：每天 22:32；期号为 年份 + 当年第几天
+ * - yd 云顶：每天 22:32；xam 新澳门：每天 21:32；期号为 年份 + 当年第几天
  * - hk 香港：每周二、四、六 21:30；期号为 年份 + 当年序号
  */
 import { LOTTERY, GAMES } from '../config/lottery.js'
@@ -32,9 +32,9 @@ function rng(seed) {
   }
 }
 
-const SEED = { xam: 0, am: 7777, hk: 4242 }
+const SEED = { yd: 0, xam: 7777, hk: 4242 }
 
-export function mockNumbers(period, lottery = 'xam') {
+export function mockNumbers(period, lottery = 'yd') {
   const r = rng(Number(period) + (SEED[lottery] || 0))
   const out = []
   while (out.length < 7) {
@@ -73,7 +73,7 @@ function schedule(lottery, now) {
     }
   } else {
     const game = GAMES.find((g) => g.code === lottery) || GAMES[0]
-    const mins = minutesOf(lottery === 'xam' ? LOTTERY.drawTime : game.drawTime)
+    const mins = minutesOf(lottery === 'yd' ? LOTTERY.drawTime : game.drawTime)
     for (let key = startKey(); key <= endKey; key += DAY) {
       list.push({ period: periodOf(key), at: key + mins * 60000 - OFFSET })
     }
@@ -89,8 +89,8 @@ function drawOf(lottery, item) {
 
 function videoOf(lottery, item) {
   const d = drawOf(lottery, item)
-  // 云顶用测试视频；澳门、香港暂无视频来源
-  return lottery === 'xam' ? withDemoVideo(d) : { ...d, videoUrl: null, src: null, type: null, duration: null, cover: null }
+  // 云顶用测试视频；新澳门、香港暂无视频来源
+  return lottery === 'yd' ? withDemoVideo(d) : { ...d, videoUrl: null, src: null, type: null, duration: null, cover: null }
 }
 
 /** 已开奖的期，最新在前 */
@@ -120,7 +120,7 @@ export function getGames() {
   return delay(GAMES.map(({ code, name, drawTime, schedule: s }) => ({ code, name, drawTime, schedule: s })))
 }
 
-export function getLatestDraw({ lottery = 'xam', now = Date.now() } = {}) {
+export function getLatestDraw({ lottery = 'yd', now = Date.now() } = {}) {
   const all = schedule(lottery, now)
   const done = all.filter((d) => d.at <= now)
   const current = done.at(-1)
@@ -131,17 +131,17 @@ export function getLatestDraw({ lottery = 'xam', now = Date.now() } = {}) {
   })
 }
 
-export function getDrawHistory({ lottery = 'xam', now = Date.now(), ...params } = {}) {
+export function getDrawHistory({ lottery = 'yd', now = Date.now(), ...params } = {}) {
   const { total, items } = query(lottery, { ...params, now })
   return delay({ total, list: items.map((d) => drawOf(lottery, d)) })
 }
 
-export function getVideoList({ lottery = 'xam', now = Date.now(), ...params } = {}) {
+export function getVideoList({ lottery = 'yd', now = Date.now(), ...params } = {}) {
   const { total, items } = query(lottery, { ...params, now })
   return delay({ total, list: items.map((d) => videoOf(lottery, d)) })
 }
 
-export function getVideoDetail(period, { lottery = 'xam', now = Date.now() } = {}) {
+export function getVideoDetail(period, { lottery = 'yd', now = Date.now() } = {}) {
   const p = normalizeIssue(period, lottery)
   const item = p && published(lottery, now).find((d) => d.period === p)
   return delay(item ? videoOf(lottery, item) : null)
@@ -151,7 +151,7 @@ const WAVE_NAME = { red: '红波', blue: '蓝波', green: '绿波' }
 const SEGMENTS = ['01-10', '11-20', '21-30', '31-40', '41-49']
 
 /** 与后端 LotteryTrend 相同的统计口径；生肖按每期开奖日所在农历年 */
-export function getTrend({ lottery = 'xam', type = 'special', periods = 30, now = Date.now() } = {}) {
+export function getTrend({ lottery = 'yd', type = 'special', periods = 30, now = Date.now() } = {}) {
   const special = type === 'special'
   const history = published(lottery, now)
     .slice(0, 100)

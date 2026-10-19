@@ -1,5 +1,5 @@
 <script setup>
-/** 彩种切换：云顶 / 澳门 / 香港 */
+/** 彩种切换：云顶 / 新澳门 / 香港 */
 defineProps({
   games: { type: Array, required: true },
   modelValue: { type: String, required: true },
@@ -20,7 +20,7 @@ const emit = defineEmits(['update:modelValue'])
       :aria-pressed="g.code === modelValue"
       @click="emit('update:modelValue', g.code)"
     >
-      <span class="name">{{ g.name }}</span>
+      <span class="name">{{ g.shortName }}</span>
       <span v-if="notes" class="note num">{{ notes[g.code] || ' ' }}</span>
     </button>
   </div>

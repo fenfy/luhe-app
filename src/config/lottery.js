@@ -1,13 +1,13 @@
 /**
- * 云顶六合彩的开奖配置（澳门、香港见下方 GAMES）。
+ * 云顶六合彩的开奖配置（新澳门、香港见下方 GAMES）。
  * 生肖按每期开奖日所在的农历年计算（utils/lottery.js 的春节日期表）。
  */
 export const LOTTERY = {
   /** 彩种名称 */
   name: '云顶六合彩',
   /** 每天开奖时间（开奖地时间，HH:mm） */
-  drawTime: '21:32',
-  /** 开奖地时区相对 UTC 的小时数（澳门 UTC+8） */
+  drawTime: '22:32',
+  /** 开奖地时区相对 UTC 的小时数（新澳门 UTC+8） */
   utcOffsetHours: 8,
   /** 开奖揭晓动画中每个号码的间隔（毫秒），7 个号码共约 7 秒 */
   revealIntervalMs: 1000,
@@ -20,13 +20,13 @@ export const LOTTERY = {
  * schedule：daily 每天固定时刻开奖；scheduled 按排期开奖（日期不固定，香港）。
  */
 export const GAMES = [
-  { code: 'xam', name: '云顶六合彩', short: '云顶', drawTime: '21:32', schedule: 'daily' },
-  { code: 'am', name: '澳门六合彩', short: '澳门', drawTime: '22:32', schedule: 'daily' },
+  { code: 'yd', name: '云顶六合彩', short: '云顶', drawTime: '22:32', schedule: 'daily' },
+  { code: 'xam', name: '新澳门六合彩', short: '新澳门', drawTime: '21:32', schedule: 'daily' },
   { code: 'hk', name: '香港六合彩', short: '香港', drawTime: null, schedule: 'scheduled' },
 ]
 
 /** 默认彩种 */
-export const DEFAULT_GAME = 'xam'
+export const DEFAULT_GAME = 'yd'
 
 /** 分页配置 */
 export const PAGE_SIZE = {
