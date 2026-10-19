@@ -3,9 +3,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { getGames } from '../api/index.js'
 import { DEFAULT_GAME, GAMES } from '../config/lottery.js'
 
-const STORAGE_KEY = 'luhe.lottery'
+// v2：2026-10-19 彩种代码调整（xam 由云顶改为新澳门），旧键里记住的代码含义已变，不再沿用
+const STORAGE_KEY = 'luhe.lottery.v2'
 
-/* 彩种列表：先用本地配置，后端返回后按代码合并（名称、开奖时刻以后端为准） */
+/* 彩种列表：先用本地配置，后端返回后按代码合并（名称、简称、开奖时刻以后端为准） */
 const games = ref(GAMES)
 let requested = false
 
@@ -17,7 +18,7 @@ function loadGames() {
       if (!Array.isArray(list) || !list.length) return
       games.value = list.map((g) => {
         const local = GAMES.find((x) => x.code === g.code) || {}
-        return { ...local, ...g, short: local.short || g.name }
+        return { ...local, ...g, shortName: g.shortName || local.shortName || g.name }
       })
     })
     .catch(() => {

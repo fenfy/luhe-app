@@ -19,10 +19,11 @@ import {
 import { getLatestDraw, getDrawHistory, getVideoList, getVideoDetail, mockNumbers } from '../src/api/mock.js'
 import { withDemoVideo } from '../src/api/videoSource.js'
 
-// 2026-10-10 14:00 新澳门时间 = 06:00 UTC（未到 21:32）
+// 以下为云顶（默认彩种，每天 22:32 北京时间）
+// 2026-10-10 14:00 北京时间 = 06:00 UTC（未到 22:32）
 const BEFORE = Date.UTC(2026, 9, 10, 6, 0)
-// 2026-10-10 21:32:00 新澳门时间 = 13:32 UTC（刚开奖）
-const AT = Date.UTC(2026, 9, 10, 13, 32)
+// 2026-10-10 22:32:00 北京时间 = 14:32 UTC（刚开奖）
+const AT = Date.UTC(2026, 9, 10, 14, 32)
 
 test('波色：每种颜色的号码数量正确', () => {
   const count = { red: 0, blue: 0, green: 0 }
@@ -61,7 +62,7 @@ test('期号：年份+当年第几天（与后端一致）', () => {
   assert.equal(normalizePeriod('abc'), null)
 })
 
-test('开奖时刻：22:32 前最新一期是昨天，之后是今天', () => {
+test('云顶开奖时刻：22:32 前最新一期是昨天，之后是今天', () => {
   assert.equal(periodOf(latestDrawDayKey(BEFORE)), '2026282')
   assert.equal(periodOf(latestDrawDayKey(AT - 1)), '2026282')
   assert.equal(periodOf(latestDrawDayKey(AT)), '2026283')
@@ -206,7 +207,7 @@ test('真实接口：返回 HTML（/api 未转发）时给出明确错误', asyn
 
 test('mock getTrend: 特码统计结构与遗漏', async () => {
   const { getTrend } = await import('../src/api/mock.js')
-  const now = Date.UTC(2026, 9, 12, 14, 0) // 2026-10-12 22:00 北京时间，已开奖
+  const now = Date.UTC(2026, 9, 12, 14, 40) // 2026-10-12 22:40 北京时间，云顶已开奖
   const t = await getTrend({ type: 'special', periods: 30, now })
   assert.equal(t.periods, 30)
   assert.equal(t.hits, 30)
@@ -266,17 +267,23 @@ test('期号规则按彩种：香港为年份+序号，不能用日期换算', a
   assert.equal(shiftIssue('2026001', -1, 'yd'), '2025365')
 })
 
-test('mock 三个彩种：新澳门 21:32、香港按排期', async () => {
+test('mock 三个彩种：云顶 22:32、新澳门 21:32、香港按排期 21:35', async () => {
   const { getLatestDraw: latest, getDrawHistory: history } = await import('../src/api/mock.js')
   // 2026-10-15（周四）22:00 北京时间
   const now = Date.UTC(2026, 9, 15, 14, 0)
+  // 新澳门 21:32 已开：当前为今天这期，下一期为明天 21:32
   const xam = await latest({ lottery: 'xam', now })
-  assert.equal(xam.current.period, '2026287')
-  assert.equal(xam.next.period, '2026288')
-  assert.equal(new Date(xam.next.drawAt).getTime(), Date.UTC(2026, 9, 15, 14, 32))
+  assert.equal(xam.current.period, '2026288')
+  assert.equal(xam.next.period, '2026289')
+  assert.equal(new Date(xam.next.drawAt).getTime(), Date.UTC(2026, 9, 16, 13, 32))
+  // 云顶 22:32 还没开：下一期仍是今天
+  const yd = await latest({ lottery: 'yd', now })
+  assert.equal(yd.current.period, '2026287')
+  assert.equal(new Date(yd.next.drawAt).getTime(), Date.UTC(2026, 9, 15, 14, 32))
+  // 香港每周二、四、六 21:35
   const hk = await latest({ lottery: 'hk', now })
-  assert.equal(new Date(hk.current.drawAt).getTime(), Date.UTC(2026, 9, 15, 13, 30))
-  assert.equal(new Date(hk.next.drawAt).getTime(), Date.UTC(2026, 9, 17, 13, 30))
+  assert.equal(new Date(hk.current.drawAt).getTime(), Date.UTC(2026, 9, 15, 13, 35))
+  assert.equal(new Date(hk.next.drawAt).getTime(), Date.UTC(2026, 9, 17, 13, 35))
   assert.equal(Number(hk.next.period), Number(hk.current.period) + 1)
   const byDate = await history({ lottery: 'hk', date: '2026-10-13', now })
   assert.equal(byDate.total, 1)

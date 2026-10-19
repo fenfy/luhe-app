@@ -31,7 +31,7 @@ async function get(path, params = {}) {
   return body
 }
 
-/** GET /app/lottery/games → [{ code, name, drawTime, schedule }] */
+/** GET /app/lottery/games → [{ code, name, drawTime, schedule, shortName }] */
 export async function getGames() {
   const body = await get('/app/lottery/games')
   return body.data || []
