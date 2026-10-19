@@ -74,9 +74,9 @@ history.reset()
       <LotterySwitch :model-value="lottery" :games="games" class="switch" @update:model-value="setLottery" />
       <div class="head">
         <div class="title-wrap">
-          <h1 id="results-title" class="page-title">{{ game.name }}开奖公告</h1>
-          <span class="section-meta">
-            共 {{ history.total.value }} 期<template v-if="!isMobile && !filtering"> · 每页 {{ pageSize }} 期</template>
+          <h1 v-if="!isMobile && !filtering" id="results-title" class="page-title">{{ game.name }}开奖公告</h1>
+          <span class="section-meta" v-if="!isMobile && !filtering">
+            共 {{ history.total.value }} 期 · 每页 {{ pageSize }} 期
           </span>
         </div>
         <form class="filters" @submit.prevent="search" @reset.prevent="resetFilters">
@@ -154,7 +154,6 @@ history.reset()
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 16px 20px;
   flex-wrap: wrap;
 }
 .title-wrap {
