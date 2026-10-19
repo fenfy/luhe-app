@@ -16,13 +16,13 @@ export const LOTTERY = {
 }
 
 /**
- * 彩种（后端 /app/lottery/games 加载失败时用这份）。
+ * 彩种（后端 /app/lottery/games 加载失败时用这份；shortName 为切换标签上的简称，以后端返回为准）。
  * schedule：daily 每天固定时刻开奖；scheduled 按排期开奖（日期不固定，香港）。
  */
 export const GAMES = [
-  { code: 'yd', name: '云顶六合彩', short: '云顶', drawTime: '22:32', schedule: 'daily' },
-  { code: 'xam', name: '新澳门六合彩', short: '新澳门', drawTime: '21:32', schedule: 'daily' },
-  { code: 'hk', name: '香港六合彩', short: '香港', drawTime: null, schedule: 'scheduled' },
+  { code: 'yd', name: '云顶六合彩', shortName: '马彩', drawTime: '22:32', schedule: 'daily' },
+  { code: 'xam', name: '新澳门六合彩', shortName: '澳彩', drawTime: '21:32', schedule: 'daily' },
+  { code: 'hk', name: '香港六合彩', shortName: '港彩', drawTime: null, schedule: 'scheduled' },
 ]
 
 /** 默认彩种 */

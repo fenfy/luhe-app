@@ -2,7 +2,7 @@
  * Mock 实现（离线开发用，VITE_USE_MOCK=true 时启用）：按当前时间推算三个彩种的开奖，
  * 号码由彩种 + 期号决定（同一期永远相同）。返回结构与真实接口一致，见 README「接口约定」。
  * - yd 云顶：每天 22:32；xam 新澳门：每天 21:32；期号为 年份 + 当年第几天
- * - hk 香港：每周二、四、六 21:30；期号为 年份 + 当年序号
+ * - hk 香港：每周二、四、六 21:35；期号为 年份 + 当年序号
  */
 import { LOTTERY, GAMES } from '../config/lottery.js'
 import {
@@ -58,7 +58,7 @@ function schedule(lottery, now) {
   if (scheduleCache.has(cacheKey)) return scheduleCache.get(cacheKey)
   const list = []
   if (lottery === 'hk') {
-    const mins = minutesOf('21:30')
+    const mins = minutesOf('21:35')
     let year = null
     let seq = 0
     for (let key = startKey(); key <= endKey; key += DAY) {

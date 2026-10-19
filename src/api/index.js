@@ -7,7 +7,7 @@ import * as http from './http.js'
 
 const impl = import.meta.env.VITE_USE_MOCK === 'true' ? mock : http
 
-/** 彩种：[{ code, name, drawTime, schedule }] */
+/** 彩种：[{ code, name, shortName, drawTime, schedule }] */
 export const getGames = () => impl.getGames()
 
 /**
