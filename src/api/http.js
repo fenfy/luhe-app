@@ -89,14 +89,14 @@ export async function getTrend({ lottery = 'yd', type = 'special', periods = 30 
 const fileUrl = (path) => (!path || /^(https?:)?\/\//.test(path) ? path : `${FILE_BASE}${path}`)
 
 /** GET /app/gallery/types → [{ value, label, count }]（字典 app_gallery_type，按字典排序） */
-export async function getGalleryTypes() {
-  const body = await get('/app/gallery/types')
+export async function getGalleryTypes({ lottery = 'yd' } = {}) {
+  const body = await get('/app/gallery/types', { lottery })
   return body.data || []
 }
 
 /** GET /app/gallery/list → { total, list: [{ id, type, src, createTime }] }（新上传的在前） */
-export async function getGalleryImages({ type = '', page = 1, pageSize = 20 } = {}) {
-  const body = await get('/app/gallery/list', { imageType: type, pageNum: page, pageSize })
+export async function getGalleryImages({ lottery = 'yd', type = '', page = 1, pageSize = 20 } = {}) {
+  const body = await get('/app/gallery/list', { lottery, imageType: type, pageNum: page, pageSize })
   return {
     total: body.total,
     list: body.rows.map((r) => ({ id: r.imageId, type: r.imageType, src: fileUrl(r.imageUrl), createTime: r.createTime })),

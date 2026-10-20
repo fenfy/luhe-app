@@ -151,7 +151,7 @@ onBeforeUnmount(() => {
       />
     </div>
 
-    <GallerySection :is-mobile="isMobile" />
+    <GallerySection :is-mobile="isMobile" :lottery="lottery" />
   </div>
 </template>
 

@@ -2,35 +2,50 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { getGalleryImages, getGalleryTypes } from '../../api/index.js'
 import { GALLERY } from '../../config/lottery.js'
-import { captionOf, visibleTypes } from '../../utils/gallery.js'
+import { ALL_TYPE, captionOf, typeParam, typesWithAll } from '../../utils/gallery.js'
 import MasonryGrid from './MasonryGrid.vue'
 import ImageViewer from './ImageViewer.vue'
 
-/** 首页「图库系列」：前几个类别 + 当前类别的最新图片 */
+/** 首页「图库系列」：当前彩种的「全部」+ 前几个类别，及所选类别的最新图片 */
 const props = defineProps({
   isMobile: Boolean,
+  /** 当前彩种（跟随首页顶部的彩种切换） */
+  lottery: { type: String, required: true },
 })
 
 const types = ref([])
 const typesError = ref('')
 const typesLoaded = ref(false)
 
+// 「全部」不占 homeTypes 的名额
 const shownTypes = computed(() =>
-  visibleTypes(types.value).slice(0, props.isMobile ? GALLERY.homeTypes.mobile : GALLERY.homeTypes.pc),
+  typesWithAll(types.value).slice(0, 1 + (props.isMobile ? GALLERY.homeTypes.mobile : GALLERY.homeTypes.pc)),
 )
-const active = ref('')
+const active = ref(ALL_TYPE)
 const activeType = computed(() => shownTypes.value.find((t) => t.value === active.value) || null)
 
+let typesToken = 0
 async function loadTypes() {
+  const my = ++typesToken
   typesError.value = ''
   try {
-    types.value = await getGalleryTypes()
+    const list = await getGalleryTypes(props.lottery)
+    if (my !== typesToken) return
+    types.value = list
     typesLoaded.value = true
   } catch (e) {
-    typesError.value = e?.message || '图库加载失败'
+    if (my === typesToken) typesError.value = e?.message || '图库加载失败'
   }
 }
-// 类别列表变化（首次加载、PC/手机切换）后，当前类别不在展示范围内就回到第一个
+// 切换彩种：回到「全部」并重新加载类别
+watch(
+  () => props.lottery,
+  () => {
+    active.value = ALL_TYPE
+    loadTypes()
+  },
+)
+// 类别列表变化（首次加载、切换彩种、PC/手机切换）后，当前类别不在展示范围内就回到「全部」
 watch(shownTypes, (list) => {
   if (!list.some((t) => t.value === active.value)) active.value = list[0]?.value || ''
 })
@@ -50,7 +65,7 @@ async function loadImages() {
   loading.value = true
   error.value = ''
   try {
-    const res = await getGalleryImages({ type, page: 1, pageSize: limit.value })
+    const res = await getGalleryImages({ lottery: props.lottery, type: typeParam(type), page: 1, pageSize: limit.value })
     if (my !== token) return
     images.value = res.list
     total.value = res.total
@@ -60,11 +75,20 @@ async function loadImages() {
     if (my === token) loading.value = false
   }
 }
-watch([active, limit], loadImages)
+// 类别列表加载完成后才取图（切换彩种时 active 可能不变，也要按新彩种重新取）
+watch([active, limit, types], () => {
+  if (typesLoaded.value && shownTypes.value.some((t) => t.value === active.value)) loadImages()
+})
 
 /* ---------- 大图 ---------- */
 const viewing = ref(-1)
 const caption = (item) => captionOf(item, types.value)
+
+/** 图库页链接：带上当前彩种；「全部」不带类别 */
+function galleryTo(t) {
+  const params = t && t.value !== ALL_TYPE ? { type: t.value } : {}
+  return { name: 'gallery', params, query: { lottery: props.lottery } }
+}
 
 onMounted(loadTypes)
 </script>
@@ -73,7 +97,7 @@ onMounted(loadTypes)
   <section class="gallery" aria-labelledby="gallery-title">
     <div class="section-head">
       <h2 id="gallery-title" class="section-title">图库系列</h2>
-      <RouterLink v-if="!isMobile && shownTypes.length" :to="{ name: 'gallery' }" class="more-link">更多图库 →</RouterLink>
+      <RouterLink v-if="!isMobile && shownTypes.length" :to="galleryTo()" class="more-link">更多图库 →</RouterLink>
     </div>
 
     <div v-if="typesError" class="state-box">
@@ -97,7 +121,7 @@ onMounted(loadTypes)
         >
           {{ t.label }}
         </button>
-        <RouterLink v-if="isMobile" :to="{ name: 'gallery' }" class="tab more-tab">更多图库 ›</RouterLink>
+        <RouterLink v-if="isMobile" :to="galleryTo()" class="tab more-tab">更多图库 ›</RouterLink>
       </div>
 
       <div v-if="error" class="state-box">
@@ -116,10 +140,10 @@ onMounted(loadTypes)
         />
         <RouterLink
           v-if="activeType"
-          :to="{ name: 'gallery', params: { type: activeType.value } }"
+          :to="galleryTo(activeType)"
           class="btn view-all"
         >
-          查看更多{{ activeType.label }}（共 {{ total }} 张）→
+          查看更多{{ activeType.value === ALL_TYPE ? '图库' : activeType.label }}（共 {{ total }} 张）→
         </RouterLink>
       </template>
     </template>

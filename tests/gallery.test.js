@@ -1,0 +1,42 @@
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
+import { ALL_TYPE, typesWithAll, typeParam } from '../src/utils/gallery.js'
+import { getGalleryTypes, getGalleryImages } from '../src/api/mock.js'
+
+test('typesWithAll：「全部」在最前，数量为有图类别之和，跳过没有图片的类别', () => {
+  const list = typesWithAll([
+    { value: '1', label: '跑狗系列', count: 3 },
+    { value: '2', label: '书籍系列', count: 0 },
+    { value: '3', label: '全网系列', count: '2' },
+  ])
+  assert.deepEqual(list.map((t) => t.value), [ALL_TYPE, '1', '3'])
+  assert.equal(list[0].label, '全部')
+  assert.equal(list[0].count, 5)
+})
+
+test('typesWithAll：该彩种没有任何图片时为空（不显示孤零零的「全部」）', () => {
+  assert.deepEqual(typesWithAll([{ value: '1', label: '跑狗系列', count: 0 }]), [])
+  assert.deepEqual(typesWithAll(null), [])
+})
+
+test('typeParam：「全部」和空值都不带类型', () => {
+  assert.equal(typeParam(ALL_TYPE), '')
+  assert.equal(typeParam(''), '')
+  assert.equal(typeParam(undefined), '')
+  assert.equal(typeParam('2'), '2')
+})
+
+test('mock 图库：按彩种区分数量，不带类型时返回该彩种全部图片', async () => {
+  const yd = await getGalleryTypes({ lottery: 'yd' })
+  const hk = await getGalleryTypes({ lottery: 'hk' })
+  const sum = (types) => types.reduce((s, t) => s + t.count, 0)
+  assert.ok(sum(hk) < sum(yd))
+
+  const all = await getGalleryImages({ lottery: 'hk', type: '', page: 1, pageSize: 5 })
+  assert.equal(all.total, sum(hk))
+  assert.equal(all.list.length, 5)
+
+  const one = await getGalleryImages({ lottery: 'hk', type: '1', page: 1, pageSize: 50 })
+  assert.equal(one.total, hk.find((t) => t.value === '1').count)
+  assert.ok(one.list.every((x) => x.type === '1'))
+})

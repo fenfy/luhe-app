@@ -191,7 +191,7 @@ export function getTrend({ lottery = 'yd', type = 'special', periods = 30, now =
 
 /* ---------- 图库 ---------- */
 
-/** 与后台字典 app_gallery_type 初始数据一致；真实类别以后台字典为准 */
+/** 与后台字典 app_gallery_type 初始数据一致；真实类别以后台字典为准（数量为云顶的，其他彩种按比例缩减） */
 const MOCK_GALLERY_TYPES = [
   { value: '1', label: '跑狗系列', count: 46 },
   { value: '2', label: '书籍系列', count: 23 },
@@ -214,23 +214,28 @@ function placeholderImage(type, id) {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
 }
 
-export function getGalleryTypes() {
-  return delay(MOCK_GALLERY_TYPES.map((t) => ({ ...t })))
+const MOCK_GALLERY_SCALE = { yd: 1, xam: 0.5, hk: 0.25 }
+
+function mockGalleryTypes(lottery) {
+  const scale = MOCK_GALLERY_SCALE[lottery] ?? 1
+  return MOCK_GALLERY_TYPES.map((t) => ({ ...t, count: Math.floor(t.count * scale) }))
 }
 
-export function getGalleryImages({ type = '', page = 1, pageSize = 20, now = Date.now() } = {}) {
-  const t = MOCK_GALLERY_TYPES.find((x) => x.value === type)
-  const total = t ? t.count : 0
-  const list = []
-  for (let i = (page - 1) * pageSize; i < Math.min(total, page * pageSize); i++) {
-    const id = total - i
-    list.push({
-      id: Number(type) * 10000 + id,
-      type,
-      src: placeholderImage(type, id),
-      createTime: formatGalleryTime(now - i * 6 * 3600 * 1000),
-    })
-  }
+export function getGalleryTypes({ lottery = 'yd' } = {}) {
+  return delay(mockGalleryTypes(lottery))
+}
+
+/** type 为空时为该彩种全部类别：按类别依次拼接（真实接口按上传时间倒序） */
+export function getGalleryImages({ lottery = 'yd', type = '', page = 1, pageSize = 20, now = Date.now() } = {}) {
+  const types = mockGalleryTypes(lottery).filter((x) => !type || x.value === type)
+  const all = types.flatMap((t) => Array.from({ length: t.count }, (_, i) => ({ type: t.value, id: t.count - i })))
+  const total = all.length
+  const list = all.slice((page - 1) * pageSize, page * pageSize).map((x, k) => ({
+    id: Number(x.type) * 10000 + x.id,
+    type: x.type,
+    src: placeholderImage(x.type, x.id),
+    createTime: formatGalleryTime(now - ((page - 1) * pageSize + k) * 6 * 3600 * 1000),
+  }))
   return delay({ total, list })
 }
 

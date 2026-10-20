@@ -2,6 +2,20 @@
 
 export const visibleTypes = (types) => (types || []).filter((t) => Number(t.count) > 0)
 
+/** 「全部」类别的值：查询时不带类型，即当前彩种下的全部图片 */
+export const ALL_TYPE = 'all'
+
+/** 有图片的类别，最前面加「全部」（数量为各类别之和）；没有任何图片时为空 */
+export function typesWithAll(types) {
+  const shown = visibleTypes(types)
+  if (!shown.length) return []
+  const count = shown.reduce((sum, t) => sum + Number(t.count), 0)
+  return [{ value: ALL_TYPE, label: '全部', count }, ...shown]
+}
+
+/** 类别值 → 接口的 imageType（「全部」不传） */
+export const typeParam = (value) => (!value || value === ALL_TYPE ? '' : value)
+
 /** "2026-10-14 10:20:30" / ISO → "2026-10-14" */
 export const dateOf = (time) => (typeof time === 'string' ? time.slice(0, 10) : '')
 

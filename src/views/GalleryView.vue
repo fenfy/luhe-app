@@ -3,9 +3,11 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getGalleryImages, getGalleryTypes } from '../api/index.js'
 import { GALLERY } from '../config/lottery.js'
-import { captionOf, visibleTypes } from '../utils/gallery.js'
+import { ALL_TYPE, captionOf, typeParam, typesWithAll } from '../utils/gallery.js'
 import { useIsMobile } from '../composables/useMediaQuery.js'
 import { usePagedList } from '../composables/usePagedList.js'
+import { useLottery } from '../composables/useLottery.js'
+import LotterySwitch from '../components/LotterySwitch.vue'
 import MasonryGrid from '../components/gallery/MasonryGrid.vue'
 import ImageViewer from '../components/gallery/ImageViewer.vue'
 import LoadMore from '../components/LoadMore.vue'
@@ -15,41 +17,52 @@ const route = useRoute()
 const router = useRouter()
 const isMobile = useIsMobile()
 
-/* ---------- 类别 ---------- */
+/* ---------- 彩种：URL ?lottery= 优先，其次上次选择（与首页共用） ---------- */
+const { games, code: lottery, setLottery } = useLottery()
+
+/* ---------- 类别（最前面是「全部」：该彩种下的全部图片） ---------- */
 const types = ref([])
 const typesLoaded = ref(false)
 const typesError = ref('')
-const shownTypes = computed(() => visibleTypes(types.value))
+const shownTypes = computed(() => typesWithAll(types.value))
 
-const routeType = computed(() => (typeof route.params.type === 'string' ? route.params.type : ''))
+/** 路由不带类别即「全部」 */
+const routeType = computed(() => (typeof route.params.type === 'string' && route.params.type ? route.params.type : ALL_TYPE))
 const current = computed(() => shownTypes.value.find((t) => t.value === routeType.value) || null)
 
+let typesToken = 0
 async function loadTypes() {
+  const my = ++typesToken
   typesError.value = ''
+  typesLoaded.value = false
   try {
-    types.value = await getGalleryTypes()
+    const list = await getGalleryTypes(lottery.value)
+    if (my !== typesToken) return
+    types.value = list
     typesLoaded.value = true
   } catch (e) {
-    typesError.value = e?.message || '图库加载失败'
+    if (my === typesToken) typesError.value = e?.message || '图库加载失败'
   }
 }
+watch(lottery, loadTypes)
 
-/** 没有指定类别或类别不存在（已删除、没有图片）时，打开第一个类别 */
+/** 类别不存在（已删除、该彩种下没有图片）时回到「全部」 */
 watch([shownTypes, routeType], () => {
   if (!typesLoaded.value || current.value || !shownTypes.value.length) return
-  router.replace({ name: 'gallery', params: { type: shownTypes.value[0].value } })
+  router.replace({ name: 'gallery', query: route.query })
 })
 
 /* ---------- 图片：PC、手机都是滚动加载 ---------- */
 const appendMode = ref(true)
-const images = usePagedList((p) => getGalleryImages({ ...p, type: current.value?.value || '' }), {
-  pageSize: GALLERY.pageSize,
-  isMobile: appendMode,
-})
+const images = usePagedList(
+  (p) => getGalleryImages({ ...p, lottery: lottery.value, type: typeParam(current.value?.value) }),
+  { pageSize: GALLERY.pageSize, isMobile: appendMode },
+)
+/** 彩种或类别变化时重新加载（等类别列表加载完再取图，避免用到上一个彩种的类别） */
 watch(
-  () => current.value?.value,
-  (type) => {
-    if (!type) return
+  () => (typesLoaded.value && current.value ? `${lottery.value}/${current.value.value}` : ''),
+  (key) => {
+    if (!key) return
     viewing.value = -1
     images.reset()
     window.scrollTo({ top: 0 })
@@ -71,19 +84,28 @@ watch(
     chips.value?.querySelector('.chip.on')?.scrollIntoView({ inline: 'center', block: 'nearest' })
   },
 )
-const typeTo = (t) => ({ name: 'gallery', params: { type: t.value } })
+/** 类别链接：「全部」不带类别；保留 ?lottery= */
+const typeTo = (t) => ({
+  name: 'gallery',
+  params: t.value === ALL_TYPE ? {} : { type: t.value },
+  query: route.query,
+})
 
 onMounted(loadTypes)
 </script>
 
 <template>
   <div class="gallery-page">
+    <div class="container lottery-bar">
+      <LotterySwitch :model-value="lottery" :games="games" @update:model-value="setLottery" />
+    </div>
+
     <div v-if="typesError" class="container state-box">
       {{ typesError }}
       <button type="button" class="btn" @click="loadTypes">重试</button>
     </div>
     <div v-else-if="!typesLoaded" class="container state-box">加载中…</div>
-    <div v-else-if="!shownTypes.length" class="container state-box">暂无图库</div>
+    <div v-else-if="!shownTypes.length" class="container state-box">该彩种暂无图库</div>
 
     <template v-else>
       <!-- 手机：类别横条 + 全部类别面板 -->
@@ -147,7 +169,7 @@ onMounted(loadTypes)
 
         <main class="main">
           <header v-if="current" class="head">
-            <h1 class="title">{{ current.label }}</h1>
+            <h1 class="title">{{ current.value === ALL_TYPE ? '全部图库' : current.label }}</h1>
             <span class="section-meta">共 {{ images.total.value || current.count }} 张</span>
           </header>
 
@@ -156,7 +178,7 @@ onMounted(loadTypes)
             {{ images.error.value }}
             <button type="button" class="btn" @click="images.retry">重试</button>
           </div>
-          <div v-else-if="images.loaded.value && !images.list.value.length" class="state-box">该类别暂无图片</div>
+          <div v-else-if="images.loaded.value && !images.list.value.length" class="state-box">暂无图片</div>
           <template v-else>
             <MasonryGrid
               :items="images.list.value"
@@ -196,6 +218,9 @@ onMounted(loadTypes)
 <style scoped>
 .gallery-page {
   padding-top: 32px;
+}
+.lottery-bar {
+  margin-bottom: 20px;
 }
 .layout {
   display: grid;
