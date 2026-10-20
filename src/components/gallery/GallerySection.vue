@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { getGalleryImages, getGalleryTypes } from '../../api/index.js'
 import { GALLERY } from '../../config/lottery.js'
-import { ALL_TYPE, captionOf, typeParam, typesWithAll } from '../../utils/gallery.js'
+import { ALL_TYPE, captionOf, homeTabs, typeParam } from '../../utils/gallery.js'
 import MasonryGrid from './MasonryGrid.vue'
 import ImageViewer from './ImageViewer.vue'
 
@@ -17,10 +17,9 @@ const types = ref([])
 const typesError = ref('')
 const typesLoaded = ref(false)
 
-// 「全部」不占 homeTypes 的名额
-const shownTypes = computed(() =>
-  typesWithAll(types.value).slice(0, 1 + (props.isMobile ? GALLERY.homeTypes.mobile : GALLERY.homeTypes.pc)),
-)
+// 「全部」+ 最多 GALLERY.homeTypes 个类别，超过时末尾显示「更多」
+const tabs = computed(() => homeTabs(types.value, GALLERY.homeTypes))
+const shownTypes = computed(() => tabs.value.tabs)
 const active = ref(ALL_TYPE)
 const activeType = computed(() => shownTypes.value.find((t) => t.value === active.value) || null)
 
@@ -121,7 +120,7 @@ onMounted(loadTypes)
         >
           {{ t.label }}
         </button>
-        <RouterLink v-if="isMobile" :to="galleryTo()" class="tab more-tab">更多图库 ›</RouterLink>
+        <RouterLink v-if="tabs.more" :to="galleryTo()" class="tab more-tab">更多 ›</RouterLink>
       </div>
 
       <div v-if="error" class="state-box">

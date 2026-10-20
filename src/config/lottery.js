@@ -37,8 +37,8 @@ export const PAGE_SIZE = {
 
 /** 图库配置 */
 export const GALLERY = {
-  /** 首页展示的类别数（按字典排序取前几个，跳过没有图片的类别） */
-  homeTypes: { pc: 8, mobile: 5 },
+  /** 首页最多展示的类别数（不含「全部」；按字典排序取前几个，跳过没有图片的类别），超过时显示「更多」 */
+  homeTypes: 4,
   /** 首页每个类别展示的图片数 */
   homeImages: { pc: 12, mobile: 10 },
   /** 图库页每次加载的图片数 */

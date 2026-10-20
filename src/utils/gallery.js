@@ -13,6 +13,15 @@ export function typesWithAll(types) {
   return [{ value: ALL_TYPE, label: '全部', count }, ...shown]
 }
 
+/**
+ * 首页类别标签：「全部」+ 最多 max 个有图片的类别；more 表示还有更多类别（显示「更多」）
+ * @returns {{ tabs: Array, more: boolean }}
+ */
+export function homeTabs(types, max) {
+  const all = typesWithAll(types)
+  return { tabs: all.slice(0, 1 + max), more: all.length > 1 + max }
+}
+
 /** 类别值 → 接口的 imageType（「全部」不传） */
 export const typeParam = (value) => (!value || value === ALL_TYPE ? '' : value)
 
