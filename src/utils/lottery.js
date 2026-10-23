@@ -77,11 +77,72 @@ export function enrichDraw(draw) {
     specialBall: toBall(draw.special, year),
     zodiacYear: year,
     zodiacName: zodiacOfYear(year),
-    date: formatDate(dayKey),
-    md: formatMonthDay(dayKey),
-    week: weekdayOf(dayKey),
-    time: Number.isNaN(at) ? LOTTERY.drawTime : localClock(at),
+    // 展示用：按访问者设备时区
+    date: Number.isNaN(at) ? formatDate(dayKey) : viewerDate(at),
+    md: Number.isNaN(at) ? formatMonthDay(dayKey) : viewerMonthDay(at),
+    week: Number.isNaN(at) ? weekdayOf(dayKey) : viewerWeekday(at),
+    time: Number.isNaN(at) ? LOTTERY.drawTime : viewerClock(at),
+    /** 访问者不在北京时间时的标注，如「北京时间 22:32」，否则为空 */
+    beijingNote: Number.isNaN(at) ? '' : beijingNote(at),
   }
+}
+
+/* ---------------- 访问者本地时间 ----------------
+ * 开奖时刻以北京时间为准（后端配置）；页面统一按访问者设备时区显示，
+ * 设备不在北京时间（UTC+8）时，在开奖时刻旁标注北京时间，避免看错。
+ */
+const VIEWER_WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+
+/** 访问者设备在该时刻是否为北京时间（UTC+8） */
+export function isBeijingZone(ms = Date.now()) {
+  return new Date(ms).getTimezoneOffset() === -LOTTERY.utcOffsetHours * 60
+}
+
+/** 时间戳 → 访问者本地 'HH:mm' */
+export function viewerClock(ms) {
+  const d = new Date(ms)
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`
+}
+
+/** 时间戳 → 访问者本地 'YYYY-MM-DD' */
+export function viewerDate(ms) {
+  const d = new Date(ms)
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+}
+
+/** 时间戳 → 访问者本地 'YYYY-MM-DD HH:mm' */
+export function viewerDateTime(ms) {
+  return `${viewerDate(ms)} ${viewerClock(ms)}`
+}
+
+/** 时间戳 → 访问者本地 'M月D日' */
+export function viewerMonthDay(ms) {
+  const d = new Date(ms)
+  return `${d.getMonth() + 1}月${d.getDate()}日`
+}
+
+/** 时间戳 → 访问者本地 '周三' */
+export function viewerWeekday(ms) {
+  return VIEWER_WEEK[new Date(ms).getDay()]
+}
+
+/** 访问者不在北京时间时返回「北京时间 HH:mm」，否则为空 */
+export function beijingNote(ms) {
+  return isBeijingZone(ms) ? '' : `北京时间 ${localClock(ms)}`
+}
+
+/**
+ * 每天固定的北京时间开奖时刻（'22:32'）换算成访问者本地时刻；
+ * 换算后跨天时加「次日」「前一天」。
+ */
+export function dailyTimeLocal(hhmm, now = Date.now()) {
+  if (!hhmm) return ''
+  const [h, m] = hhmm.split(':').map(Number)
+  const today = localDayKey(now)
+  const at = today + (h * 60 + m) * 60000 - LOTTERY.utcOffsetHours * 3600000
+  if (isBeijingZone(at)) return hhmm
+  const shift = Math.round((Date.parse(viewerDate(at)) - today) / DAY)
+  return `${shift > 0 ? '次日' : shift < 0 ? '前一天 ' : ''}${viewerClock(at)}`
 }
 
 /** 时间戳 → 开奖地 'HH:mm' */

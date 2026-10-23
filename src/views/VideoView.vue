@@ -157,7 +157,7 @@ videos.reset()
             <span class="pc-only">{{ game.name }} </span>第 <span class="num">{{ currentVideo.period }}</span> 期 开奖回放
           </h1>
           <div class="sub">
-            {{ currentVideo.date }} {{ currentVideo.week }} {{ currentVideo.time }}<template v-if="currentVideo.durationText"> · 时长 {{ currentVideo.durationText }}</template>
+            {{ currentVideo.date }} {{ currentVideo.week }} {{ currentVideo.time }}<template v-if="currentVideo.beijingNote">（{{ currentVideo.beijingNote }}）</template><template v-if="currentVideo.durationText"> · 时长 {{ currentVideo.durationText }}</template>
           </div>
         </div>
       </div>

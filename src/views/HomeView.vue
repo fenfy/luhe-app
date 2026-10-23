@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { getLatestDraw } from '../api/index.js'
 import { LOTTERY } from '../config/lottery.js'
-import { enrichDraw, localClock, localDayKey, weekdayOf } from '../utils/lottery.js'
+import { dailyTimeLocal, enrichDraw, viewerClock, viewerWeekday } from '../utils/lottery.js'
 import { useIsMobile } from '../composables/useMediaQuery.js'
 import { useGames, rememberLottery, storedLottery } from '../composables/useLottery.js'
 import HomeHero from '../components/HomeHero.vue'
@@ -21,11 +21,11 @@ const hkNext = ref(undefined)
 const notes = computed(() =>
   Object.fromEntries(
     games.value.map((g) => {
-      if (g.schedule !== 'scheduled') return [g.code, `每天 ${g.drawTime}`]
+      if (g.schedule !== 'scheduled') return [g.code, `每天 ${dailyTimeLocal(g.drawTime)}`]
       if (hkNext.value === undefined) return [g.code, '']
       if (!hkNext.value) return [g.code, '下期待公布']
       const at = Date.parse(hkNext.value.drawAt)
-      return [g.code, `${weekdayOf(localDayKey(at))} ${localClock(at)}`]
+      return [g.code, `${viewerWeekday(at)} ${viewerClock(at)}`]
     }),
   ),
 )

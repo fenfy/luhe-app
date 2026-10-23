@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { formatMonthDay, localClock, localDayKey, weekdayOf } from '../utils/lottery.js'
+import { beijingNote, dailyTimeLocal, isBeijingZone, viewerClock, viewerMonthDay, viewerWeekday } from '../utils/lottery.js'
 import DrawBalls from './DrawBalls.vue'
 import CountdownDigits from './CountdownDigits.vue'
 import Icon from './Icon.vue'
@@ -24,13 +24,16 @@ const shownPeriod = computed(() => (waiting.value ? props.next?.period : props.d
 const seqText = computed(() => shownPeriod.value.slice(-3))
 const empty = computed(() => !props.draw && props.phase === 'idle')
 const nextTarget = computed(() => (props.next ? Date.parse(props.next.drawAt) : 0))
+// 时间按访问者设备时区显示；不在北京时间时另标北京时间
 const nextDay = computed(() => {
   if (!props.next) return ''
   const at = Date.parse(props.next.drawAt)
-  const key = localDayKey(at)
-  return `${formatMonthDay(key)} ${weekdayOf(key)} ${localClock(at)}`
+  return `${viewerMonthDay(at)} ${viewerWeekday(at)} ${viewerClock(at)}`
 })
+const nextBeijing = computed(() => (props.next ? beijingNote(Date.parse(props.next.drawAt)) : ''))
 const daily = computed(() => props.game.schedule !== 'scheduled')
+const dailyLocal = computed(() => dailyTimeLocal(props.game.drawTime))
+const showBeijing = computed(() => !isBeijingZone())
 const replayTo = computed(() => ({
   name: 'video',
   query: { lottery: props.game.code, ...(props.draw ? { period: props.draw.period } : {}) },
@@ -78,13 +81,18 @@ const fmtDate = (iso) => {
         <div class="next-period">
           第 <span class="num">{{ next?.period || '-------' }}</span> 期
         </div>
-        <div class="next-day">{{ nextDay }}</div>
+        <div class="next-day">
+          {{ nextDay }}
+          <span v-if="nextBeijing" class="bj-note">（{{ nextBeijing }}）</span>
+        </div>
       </div>
       <CountdownDigits v-if="next" :key="game.code + next.period" :target="nextTarget" @end="emit('countdown-end')" />
       <p v-else class="no-next">下期开奖时间待公布</p>
       <div class="next-foot only-pc">
         <Icon name="clock" :size="16" />
-        <template v-if="daily">每天 {{ game.drawTime }} 准时开奖，归零后号码逐个揭晓</template>
+        <template v-if="daily">
+          每天 {{ dailyLocal }}<template v-if="showBeijing">（北京时间 {{ game.drawTime }}）</template> 准时开奖，归零后号码逐个揭晓
+        </template>
         <template v-else>开奖日期以官方排期为准，归零后号码逐个揭晓</template>
       </div>
       <RouterLink v-if="draw" :to="replayTo" class="btn btn-primary btn-tall only-mobile"><Icon name="play" />观看本期开奖回放</RouterLink>
@@ -93,6 +101,11 @@ const fmtDate = (iso) => {
 </template>
 
 <style scoped>
+.bj-note {
+  color: var(--faint);
+  font-size: 12px;
+  white-space: nowrap;
+}
 .no-next {
   margin: 0;
   padding: 18px 0;

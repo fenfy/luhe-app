@@ -254,7 +254,27 @@ test('生肖按开奖日所在农历年：春节前后不同', () => {
   // 与新澳门官方数据一致：2025-12-31 42→鼠、45→鸡
   const xam = enrichDraw({ period: '2025365', drawAt: '2025-12-31T21:32:32+08:00', numbers: [42, 45, 48, 37, 15, 8], special: 27 })
   assert.deepEqual(xam.balls.map((b) => b.zodiac), ['鼠', '鸡', '马', '蛇', '兔', '狗'])
-  assert.equal(xam.time, '21:32')
+})
+
+test('时间按访问者时区显示，非北京时间时标注北京时间', async () => {
+  const { dailyTimeLocal, beijingNote, viewerClock } = await import('../src/utils/lottery.js')
+  const saved = process.env.TZ
+  try {
+    process.env.TZ = 'Asia/Saigon'
+    const d = enrichDraw({ period: '2026294', drawAt: '2026-10-21T22:32:00+08:00', numbers: [1, 2, 3, 4, 5, 6], special: 7 })
+    assert.equal(d.time, '21:32')
+    assert.equal(d.beijingNote, '北京时间 22:32')
+    assert.equal(dailyTimeLocal('22:32'), '21:32')
+    // 北京时间 00:10 在 UTC+7 是前一天 23:10
+    assert.equal(dailyTimeLocal('00:10'), '前一天 23:10')
+    process.env.TZ = 'Asia/Shanghai'
+    assert.equal(dailyTimeLocal('22:32'), '22:32')
+    assert.equal(beijingNote(Date.parse('2026-10-21T22:32:00+08:00')), '')
+    assert.equal(viewerClock(Date.parse('2026-10-21T22:32:00+08:00')), '22:32')
+  } finally {
+    if (saved === undefined) delete process.env.TZ
+    else process.env.TZ = saved
+  }
 })
 
 test('期号规则按彩种：香港为年份+序号，不能用日期换算', async () => {

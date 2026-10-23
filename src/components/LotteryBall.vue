@@ -1,40 +1,14 @@
 <script setup>
-import { onBeforeUnmount, ref, watch } from 'vue'
-import { pad2 } from '../utils/lottery.js'
-
-const props = defineProps({
+defineProps({
   /** toBall() 返回的对象；rolling 时可为空 */
   ball: { type: Object, default: null },
   /** lg | md | sm | xs */
   size: { type: String, default: 'md' },
   special: Boolean,
-  /** 滚动中（未揭晓） */
+  /** 未揭晓（开奖中）：灰球显示问号，不显示号码 */
   rolling: Boolean,
   showZodiac: Boolean,
 })
-
-const rollingNum = ref('00')
-let timer = null
-
-function stop() {
-  clearInterval(timer)
-  timer = null
-}
-
-watch(
-  () => props.rolling,
-  (on) => {
-    stop()
-    if (on) {
-      timer = setInterval(() => {
-        rollingNum.value = pad2(1 + Math.floor(Math.random() * 49))
-      }, 80)
-    }
-  },
-  { immediate: true },
-)
-
-onBeforeUnmount(stop)
 </script>
 
 <template>
@@ -45,7 +19,7 @@ onBeforeUnmount(stop)
       :aria-label="rolling || !ball ? '开奖中' : `${special ? '特码 ' : ''}${ball.num} 号 ${ball.zodiac}`"
       role="img"
     >
-      {{ rolling || !ball ? rollingNum : ball.num }}
+      {{ rolling || !ball ? '?' : ball.num }}
     </div>
     <span v-if="showZodiac" class="zodiac" :class="{ 'is-special': special }" aria-hidden="true">
       {{ rolling || !ball ? '?' : ball.zodiac }}
@@ -84,6 +58,17 @@ onBeforeUnmount(stop)
 .is-rolling {
   background: #d6dbe4;
   color: #4a5263;
+  animation: waiting 1.6s ease-in-out infinite;
+}
+@keyframes waiting {
+  50% {
+    opacity: 0.55;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .is-rolling {
+    animation: none;
+  }
 }
 .ball.is-special {
   outline: 2px solid var(--gold);
