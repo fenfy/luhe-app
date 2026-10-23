@@ -91,9 +91,9 @@ const fmtDate = (iso) => {
       <div class="next-foot only-pc">
         <Icon name="clock" :size="16" />
         <template v-if="daily">
-          每天 {{ dailyLocal }}<template v-if="showBeijing">（北京时间 {{ game.drawTime }}）</template> 准时开奖，归零后号码逐个揭晓
+          每天 {{ dailyLocal }}<template v-if="showBeijing">（北京时间 {{ game.drawTime }}）</template> 准时开奖
         </template>
-        <template v-else>开奖日期以官方排期为准，归零后号码逐个揭晓</template>
+        <template v-else>开奖日期以官方排期为准</template>
       </div>
       <RouterLink v-if="draw" :to="replayTo" class="btn btn-primary btn-tall only-mobile"><Icon name="play" />观看本期开奖回放</RouterLink>
     </div>
