@@ -1,19 +1,12 @@
 <script setup>
-import { computed, reactive } from 'vue'
 import logoUrl from '../assets/logo.png'
-import logoUrlH5 from '../assets/logo-h5.png'
-import { useIsMobile } from '../composables/useMediaQuery.js'
-const isMobile = useIsMobile()
-const filters = reactive({ date: '', period: '' })
-const filtering = computed(() => !!(filters.date || filters.period))
 </script>
 
 <template>
   <header class="header">
     <div class="container header-inner">
       <RouterLink to="/" class="brand" aria-label="云顶六合彩 首页">
-        <img :src="!isMobile && !filtering ? logoUrl : logoUrlH5" alt="云顶六合彩 logo" class="brand-mark" />
-        <span class="brand-name">云顶六合彩</span>
+        <img :src="logoUrl" alt="云顶六合彩" class="brand-mark" />
       </RouterLink>
       <nav aria-label="主导航" class="nav">
         <RouterLink to="/" class="nav-link" exact-active-class="is-active">首页</RouterLink>
