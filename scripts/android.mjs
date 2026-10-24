@@ -83,7 +83,15 @@ function gradleEnv() {
       ? join(env.LOCALAPPDATA || '', 'Android', 'Sdk')
       : join(env.HOME || '', process.platform === 'darwin' ? 'Library/Android/sdk' : 'Android/Sdk')
     if (existsSync(sdk)) writeFileSync(localProps, `sdk.dir=${sdk.replace(/\\/g, '\\\\')}\n`)
-    else console.warn('⚠ 没找到 Android SDK：请先安装 Android Studio，或设置 ANDROID_HOME')
+    else {
+      console.error(
+        `✖ 默认位置没有 Android SDK（${sdk}）。\n` +
+          '  在 Android Studio 的 Settings → Languages & Frameworks → Android SDK 查看「Android SDK Location」，\n' +
+          '  然后设置环境变量 ANDROID_HOME 为该路径，或新建 android/local.properties 写入 sdk.dir=该路径（反斜杠写成 \\\\）。\n' +
+          '  也可以先执行 yarn android:open，用 Android Studio 打开一次 android/，它会自动生成 local.properties。',
+      )
+      process.exit(1)
+    }
   }
   return env
 }
