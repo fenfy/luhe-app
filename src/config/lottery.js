@@ -9,8 +9,8 @@ export const LOTTERY = {
   drawTime: '22:32',
   /** 开奖地时区相对 UTC 的小时数（新澳门 UTC+8） */
   utcOffsetHours: 8,
-  /** 开奖揭晓动画中每个号码的间隔（毫秒），7 个号码共约 7 秒 */
-  revealIntervalMs: 1000,
+  /** 开奖揭晓动画：每个号码间隔随机 min~max 毫秒（7 个号码共约 35~49 秒） */
+  revealIntervalMs: { min: 5000, max: 7000 },
   /** mock 数据的第一期日期（开奖地日期） */
   mockStartDate: '2025-01-01',
 }

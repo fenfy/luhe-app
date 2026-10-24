@@ -61,7 +61,7 @@ async function loadLatest(my = session) {
 
 function stopTimers() {
   clearTimeout(pollTimer)
-  clearInterval(revealTimer)
+  clearTimeout(revealTimer)
 }
 
 async function switchTo() {
@@ -102,18 +102,28 @@ function onCountdownEnd() {
   poll()
 }
 
+/** 下一个号码的等待时间：min~max 之间随机 */
+function revealDelay() {
+  const { min, max } = LOTTERY.revealIntervalMs
+  return min + Math.random() * (max - min)
+}
+
 function startReveal() {
+  const my = session
   phase.value = 'revealing'
   revealed.value = 0
-  revealTimer = setInterval(() => {
+  const step = () => {
+    if (my !== session) return
     revealed.value += 1
     if (revealed.value >= 7) {
-      clearInterval(revealTimer)
-      setTimeout(() => {
-        phase.value = 'idle'
+      revealTimer = setTimeout(() => {
+        if (my === session) phase.value = 'idle'
       }, 600)
+      return
     }
-  }, LOTTERY.revealIntervalMs)
+    revealTimer = setTimeout(step, revealDelay())
+  }
+  revealTimer = setTimeout(step, revealDelay())
 }
 
 onMounted(() => {
