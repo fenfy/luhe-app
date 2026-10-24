@@ -14,7 +14,7 @@
 ```bash
 npm install
 npm run dev        # 开发：http://localhost:5173，/api 自动代理到 http://localhost:8061
-npm run build      # 打包到 dist/
+npm run build      # 打包到 app/
 npm run preview    # 本地预览打包结果
 npm test           # 单元测试（期号、生肖、波色、mock 数据、接口映射）
 ```
@@ -25,6 +25,73 @@ npm test           # 单元测试（期号、生肖、波色、mock 数据、接
 - `npm run preview`：已在 `vite.config.js` 配好 `preview.proxy`，和开发时一样把 `/api` 转发到 `VITE_API_PROXY`（默认 `http://localhost:8061`）。访问 http://localhost:4173。
 - Nginx：参考 `deploy/nginx.conf.example`。要点是 `location /api/ { proxy_pass http://127.0.0.1:8061/; }`（结尾的 `/` 用来去掉 `/api` 前缀）和 `try_files $uri $uri/ /index.html;`（history 路由）。
 - 其他静态服务器（如直接用 `npx serve dist`）不会转发 `/api`，不能直接使用。或者在打包前把 `VITE_API_BASE` 设为后端完整地址（如 `https://api.example.com`），这时后端 `app.cors.allowed-origins` 要加上 H5 的域名。
+
+## Android App 打包（Capacitor）
+
+App 内的页面是打进安装包的 H5（`yarn build:app` = `vite build --mode app`，读取 `.env.app`），接口和图片直接请求线上 `https://www.ydliuhecai.cc`。App 内页面的来源是 `https://localhost`，后端 `app.cors.allowed-origins` 必须包含它（`luhe-app/src/main/resources/application.yml` 已配置）。
+
+包名 `com.luhe.app`，名称、图标、启动页配置在 `capacitor.config.json` 和 `assets/logo.png`。版本号以 `package.json` 为准：`version` → versionName，`versionCode` → versionCode，**每次发版都要把 `versionCode` 加 1**，否则用户无法覆盖安装。
+
+### 准备环境（只需一次）
+
+1. 安装 [Android Studio](https://developer.android.com/studio)（自带 JDK 21 和 Android SDK），第一次打开时按向导装好 SDK。
+2. 在本目录执行 `yarn install`。
+
+### 第一次生成 android/ 工程
+
+```bash
+yarn android:init     # cap add android + 签名配置 + 用 assets/logo.png 生成图标和启动页
+```
+
+生成的 `android/` 要提交进 git（`android/keystore.properties` 和 `*.jks` 已在 .gitignore 里）。
+
+### 生成签名 keystore（只需一次，务必单独备份）
+
+keystore 丢了以后就**无法再发布能覆盖安装的新版本**，请把 `.jks` 文件和密码一起备份到安全的地方。
+
+```bash
+# 在 android/ 目录执行；keytool 在 Android Studio 的 jbr\bin 下（如 "C:\Program Files\Android\Android Studio\jbr\bin\keytool.exe"）
+keytool -genkeypair -v -keystore luhe-release.jks -alias luhe -keyalg RSA -keysize 2048 -validity 36500
+```
+
+然后新建 `android/keystore.properties`：
+
+```properties
+storeFile=luhe-release.jks
+storePassword=你设置的 keystore 密码
+keyAlias=luhe
+keyPassword=你设置的 key 密码
+```
+
+### 打包
+
+```bash
+yarn android:apk           # release 包（已签名）→ release/luhe-<version>.apk
+yarn android:apk --debug   # 测试包，不需要 keystore
+yarn android:sync          # 只同步 H5 到 android/（之后可在 Android Studio 里调试）
+yarn android:open          # 用 Android Studio 打开
+```
+
+脚本会自动使用 Android Studio 自带的 JDK（`C:\Program Files\Android\Android Studio\jbr`）和默认 SDK 目录；装在别处时设置 `JAVA_HOME`、`ANDROID_HOME`。
+
+### 分发
+
+把 `release/luhe-<version>.apk` 上传到服务器的 `/var/www/luhe-download/luhe.apk`（Nginx 配置见 `deploy/nginx.conf.example` 的 `location /download/`）。H5 在 Android 浏览器里打开时，底部会出现「下载」入口，地址可用 `VITE_APK_URL` 修改。
+
+### App 内的行为
+
+- 物理返回键：有上一页就返回；在首页 2 秒内再按一次退出（`src/native/index.js`）
+- 状态栏白底黑字，不覆盖页面；启动页在路由就绪后隐藏
+- 前端改动需要重新打包发版（没有热更新、没有 App 内检查更新）
+
+## iOS：PWA（添加到主屏幕）
+
+iOS 暂不出 ipa，用 PWA：`yarn build` 时 `vite-plugin-pwa` 生成 `manifest.webmanifest` 和 Service Worker（`sw.js`），图标在 `public/icons/`（由 `src/assets/app.png` 生成）。
+
+- 缓存策略：页面框架（html/js/css/图标）预缓存；`/api/` 开奖接口**只走网络**；`/profile/` 图库图片先读缓存（最多 300 张、7 天）；视频不缓存。
+- 更新：`autoUpdate`，发版后用户下次打开自动换成新版本。Nginx 必须让 `sw.js`、`index.html`、`manifest.webmanifest` 不被缓存（示例配置已包含）。
+- iOS Safari 里（还没添加到主屏幕时）底部会提示「分享 → 添加到主屏幕」，关闭后不再出现（`src/components/InstallBanner.vue`）。
+- Service Worker 只在 https（或 localhost）下生效。`yarn dev` 不启用 PWA，用 `yarn build && yarn preview` 验证。
 
 ## 目录
 
