@@ -1,5 +1,5 @@
 # 路合开奖 H5 部署示例（Nginx）
-# 1. npm run build，把 dist/ 拷到服务器，例如 /var/www/luhe-app
+# 1. yarn build，把 app/ 拷到服务器，例如 /var/www/luhe-app
 # 2. 把下面的 server 块放进 nginx 配置，按实际修改域名、路径和后端地址后 nginx -s reload
 
 server {
@@ -32,6 +32,25 @@ server {
     # 前端路由（history 模式）：找不到的路径回退到 index.html
     location / {
         try_files $uri $uri/ /index.html;
+    }
+
+    # PWA：Service Worker 和清单不能被缓存，否则用户收不到新版本（autoUpdate 依赖它们）
+    location = /sw.js {
+        add_header Cache-Control "no-cache";
+    }
+    location = /index.html {
+        add_header Cache-Control "no-cache";
+    }
+    location = /manifest.webmanifest {
+        default_type application/manifest+json;
+        add_header Cache-Control "no-cache";
+    }
+
+    # Android 安装包：把 release/luhe-x.y.z.apk 上传为 /var/www/luhe-download/luhe.apk
+    location /download/ {
+        alias /var/www/luhe-download/;
+        types { application/vnd.android.package-archive apk; }
+        add_header Cache-Control "no-cache";
     }
 
     # 带哈希的静态资源长期缓存
