@@ -26,8 +26,8 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.svg', 'icons/apple-touch-icon.png'],
         manifest: {
-          name: '路合',
-          short_name: '路合',
+          name: '马彩',
+          short_name: '马彩',
           description: '开奖公告、开奖视频、走势图、图库',
           lang: 'zh-CN',
           start_url: '/',
