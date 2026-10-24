@@ -9,3 +9,9 @@ app
 !.vscode/extensions.json
 .idea
 *.zip
+# Android 签名：keystore 和密码只放本地，单独备份，绝不提交
+*.jks
+*.keystore
+android/keystore.properties
+# yarn android:apk 输出的安装包
+release/

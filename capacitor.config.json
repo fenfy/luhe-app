@@ -1,0 +1,15 @@
+{
+  "appId": "com.luhe.app",
+  "appName": "路合",
+  "webDir": "app",
+  "android": {
+    "adjustMarginsForEdgeToEdge": "auto"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": false,
+      "backgroundColor": "#FFFFFF",
+      "showSpinner": false
+    }
+  }
+}
