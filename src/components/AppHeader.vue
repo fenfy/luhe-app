@@ -43,6 +43,8 @@ const filtering = computed(() => !!(filters.date || filters.period))
   min-height: 64px;
 }
 .brand {
+  flex: 0 1 auto;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -63,6 +65,7 @@ const filtering = computed(() => !!(filters.date || filters.period))
   letter-spacing: 3px;
 }
 .nav {
+  flex: none;
   display: flex;
   gap: 32px;
 }
@@ -73,6 +76,7 @@ const filtering = computed(() => !!(filters.date || filters.period))
   color: var(--muted);
   text-decoration: none;
   font-size: 16px;
+  white-space: nowrap;
   border-bottom: 2px solid transparent;
 }
 .nav-link:hover {
@@ -108,6 +112,36 @@ const filtering = computed(() => !!(filters.date || filters.period))
   }
   .nav {
     gap: 12px;
+  }
+}
+/* 400px 以下（如 360 宽的安卓机）：缩小 logo 与栏目间距，栏目文字不换行 */
+@media (max-width: 399px) {
+  .header-inner {
+    gap: 8px;
+  }
+  .brand-mark {
+    height: 36px;
+    max-width: 100px;
+    object-fit: contain;
+  }
+  .nav {
+    gap: 10px;
+  }
+  .nav-link {
+    font-size: 14px;
+  }
+}
+/* 340px 以下（如 320 宽的小屏） */
+@media (max-width: 339px) {
+  .brand-mark {
+    height: 30px;
+    max-width: 80px;
+  }
+  .nav {
+    gap: 8px;
+  }
+  .nav-link {
+    font-size: 13px;
   }
 }
 </style>
